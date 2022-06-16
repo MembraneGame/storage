@@ -22,27 +22,5 @@ solana config set --url localhost
 anchor test
 ```
 
-# Deploying to devnet
-
-## Changing the cluster
-
-```
-solana config set --url devnet
-
-# Outputs:
-# Config File: /Users/viktor/.config/solana/cli/config.yml
-# RPC URL: https://api.devnet.solana.com
-# WebSocket URL: wss://api.devnet.solana.com/ (computed)
-# Keypair Path: /Users/viktor/.config/solana/id.json
-# Commitment: confirmed
-```
-
-```
-anchor build
-anchor deploy
-
-
-
-```
 
 run `anchor build` before deploying to make sure I’m deploying the latest version of my code.
