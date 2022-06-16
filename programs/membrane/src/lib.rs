@@ -30,12 +30,16 @@ pub mod membrane {
         token_state::mint_token(ctx, amount)
     }
 
-    pub fn user_sell<'info>(ctx: Context<InitializeUser>, ctx_burn: Context<BurnToken>, amount: u64) -> Result<()> {
-        token_state::user_sell(ctx, ctx_burn, amount)
+    pub fn user_sell(ctx: Context<InitializeUser>, amount: u64) -> Result<()> {
+        token_state::user_sell(ctx, amount)
     }
 
-    pub fn payout<'info>(ctx: Context<Payout>, ctx2: Context<maths::Update>, placement: u8, kills: u8) -> Result<()> {
-        game_state::payout(ctx, ctx2, placement, kills)
+    pub fn payout(ctx: Context<Payout>, placement: u8, kills: u8) -> Result<()> {
+        game_state::payout(ctx, placement, kills)
+    }
+
+    pub fn burn_token(ctx_burn: Context<BurnToken>, amount:u64) -> Result<()> {
+        token_state::burn_token(ctx_burn, amount)
     }
 
 }

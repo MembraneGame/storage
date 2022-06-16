@@ -11,7 +11,7 @@ pub fn initialize_reward(ctx: Context<maths::InitializeReward>) -> Result<()> {
 }
 
 //Fn to pay player
-pub fn payout(ctx: Context<Payout>, ctx2: Context<maths::Update>, placement: u8, kills: u8) -> Result<()> {
+pub fn payout(ctx: Context<Payout>, placement: u8, kills: u8) -> Result<()> {
     let player = &mut ctx.accounts.player;
     let rating_multiplier:f64 = match player.rating {
         Some(0..=100) => 0.8,
@@ -21,7 +21,7 @@ pub fn payout(ctx: Context<Payout>, ctx2: Context<maths::Update>, placement: u8,
         _ => return Err(errors::ErrorCode::RatingOverflow.into()),
     };
 
-    let reward_account = &mut ctx2.accounts.reward;
+    let reward_account = &mut ctx.accounts.reward;
     reward_account.calculate_reward(); //Calculate and update the reward account
     reward_account.reload()?;
 
@@ -82,9 +82,10 @@ pub fn payout(ctx: Context<Payout>, ctx2: Context<maths::Update>, placement: u8,
     Ok(())
 }
 
-
 #[derive(Accounts)]
 pub struct Payout<'info> {
+        #[account(mut)]
+        pub reward: Account<'info, maths::Reward>,
         #[account(mut)]
         player: Account<'info, player_state::Player>,
         pub sender: Signer<'info>,

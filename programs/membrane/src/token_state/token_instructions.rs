@@ -32,7 +32,7 @@ pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
 }
 
 //Fn when user sells tokens back to the storage
-pub fn user_sell(ctx: Context<InitializeUser>, ctx_burn: Context<BurnToken>, amount: u64) -> Result<()> {
+pub fn user_sell(ctx: Context<InitializeUser>, amount: u64) -> Result<()> {
     //Define Transfer account
     let cpi_accounts = Transfer {
         from: ctx
@@ -61,33 +61,37 @@ pub fn user_sell(ctx: Context<InitializeUser>, ctx_burn: Context<BurnToken>, amo
     let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
     token::transfer(cpi_ctx, amount as u64)?;
 
-    //Define Burn account
-    let cpi_burn_accounts = Burn {
-        mint: ctx_burn
-        .accounts
-        .mint
-        .to_account_info(),
-
-        from: ctx_burn
-        .accounts
-        .vault_token
-        .to_account_info(),
-        
-        authority: ctx_burn
-        .accounts
-        .authority
-        .to_account_info(),
-    };
-
-    //Define burn token program
-    let cpi_burn_program = ctx_burn
-    .accounts
-    .token_program
-    .to_account_info();
-
-    //Define CpiContext<Burn>
-    let cpi_burn_ctx = CpiContext::new(cpi_burn_program, cpi_burn_accounts);
-    token::burn(cpi_burn_ctx, amount/2)?;
-
     Ok(())
+}
+
+pub fn burn_token(ctx_burn: Context<BurnToken>, amount:u64) -> Result<()> {
+        //Define Burn account
+        let cpi_burn_accounts = Burn {
+            mint: ctx_burn
+            .accounts
+            .mint
+            .to_account_info(),
+    
+            from: ctx_burn
+            .accounts
+            .vault_token
+            .to_account_info(),
+            
+            authority: ctx_burn
+            .accounts
+            .authority
+            .to_account_info(),
+        };
+    
+        //Define burn token program
+        let cpi_burn_program = ctx_burn
+        .accounts
+        .token_program
+        .to_account_info();
+    
+        //Define CpiContext<Burn>
+        let cpi_burn_ctx = CpiContext::new(cpi_burn_program, cpi_burn_accounts);
+        token::burn(cpi_burn_ctx, amount)?;
+
+        Ok(())
 }

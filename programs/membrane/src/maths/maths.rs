@@ -15,13 +15,6 @@ impl Reward {
     }
 }
 
-//Fn to update_reward
-pub fn update_reward(ctx: Context<Update>) -> Result<()> {
-    let reward_account = &mut ctx.accounts.reward;
-    reward_account.calculate_reward();
-    Ok(())
-}
-
 #[derive(Accounts)]
 pub struct InitializeReward<'info> {
     #[account(init, payer = admin, space = constants::MAX_SIZE_REWARD)]
