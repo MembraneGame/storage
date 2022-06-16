@@ -23,4 +23,3 @@ anchor test
 ```
 
 
-run `anchor build` before deploying to make sure I’m deploying the latest version of my code.
