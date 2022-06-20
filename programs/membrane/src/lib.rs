@@ -11,7 +11,7 @@ pub mod player_state;
 pub mod game_state;
 pub mod token_state;
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("FUbwV7PHj34RaBkifLAkcQ4zdtK6heSWhHVG6qWz5M1o");
 
 #[program]
 pub mod membrane {
