@@ -31,7 +31,7 @@ pub mod membrane {
         token_state::mint_token(ctx, amount)
     }
 
-    pub fn user_sell(ctx: Context<InitializeUser>, amount: u64) -> Result<()> {
+    pub fn user_sell(ctx: Context<InitializeUser>, amount: u64) -> Result<()> { //authority is user, NOT the storage
         token_state::user_sell(ctx, amount)
     }
 
