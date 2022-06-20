@@ -16,6 +16,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 #[program]
 pub mod membrane {
 
+    //authority is always storage unless specified otherwise
     use super::*;
 
     pub fn initialize_reward(ctx: Context<InitializeReward>) -> Result<()> {
