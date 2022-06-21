@@ -17,10 +17,10 @@ impl Reward {
 
 #[derive(Accounts)]
 pub struct InitializeReward<'info> {
-    #[account(init, payer = admin, space = constants::MAX_SIZE_REWARD)]
+    #[account(init, payer = payer, space = constants::MAX_SIZE_REWARD)]
     pub reward: Account<'info, Reward>,
     #[account(mut)]
-    pub admin: Signer<'info>,
+    pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 
