@@ -24,10 +24,10 @@ describe('Membrane', () => {
     // admin = authority = storage
     storage = Keypair.generate();
     // Airdrop storage
-    await getAirdrop(program.provider.connection, storage.publicKey, 2);
+    await getAirdrop(program.provider.connection, storage.publicKey);
   });
 
-  it('Can initialize mint', async () => {
+  it.skip('Can initialize mint', async () => {
     const mint = Keypair.generate();
     const rent = Keypair.generate();
 
@@ -43,19 +43,21 @@ describe('Membrane', () => {
       .rpc();
   });
 
-  // it("Can initialize a reward", async () => {
-  //   const reward = Keypair.generate();
-  //
-  //   await program.methods
-  //     .initializeReward()
-  //     .accounts({
-  //       reward: reward.publicKey,
-  //       admin: storage.publicKey,
-  //       systemProgram,
-  //     })
-  //     .signers([storage, reward])
-  //     .rpc();
-  //
-  //   const rewardAccount = await program.account.reward.fetch(reward.publicKey);
-  // });
+  it('Can initialize a reward', async () => {
+    const reward = Keypair.generate();
+
+    await program.methods
+      .initializeReward()
+      .accounts({
+        reward: reward.publicKey,
+        admin: storage.publicKey,
+        systemProgram
+      })
+      .signers([storage, reward])
+      .rpc();
+
+    const rewardAccount = await program.account.reward.fetch(reward.publicKey);
+
+    console.log(rewardAccount);
+  });
 });
