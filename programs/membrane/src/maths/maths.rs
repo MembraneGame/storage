@@ -12,12 +12,13 @@ impl Reward {
         self.victory = (constants::NFT_PRICE / 16.8) * multiplier;
         self.top_five = (constants::NFT_PRICE / 67.2) * multiplier;
         self.top_ten = (constants::NFT_PRICE / 168.0) * multiplier;
+        self.kill = (constants::NFT_PRICE / 120.0 ) * multiplier;
     }
 }
 
 #[derive(Accounts)]
 pub struct InitializeReward<'info> {
-    #[account(init, payer = payer, space = constants::MAX_SIZE_REWARD)]
+    #[account(init, payer = payer, space = 1000)]
     pub reward: Account<'info, Reward>,
     #[account(mut)]
     pub payer: Signer<'info>,
