@@ -13,8 +13,8 @@ pub fn initialize_reward(ctx: Context<maths::InitializeReward>) -> Result<()> {
 //Fn to pay player
 pub fn payout(ctx: Context<Payout>, placement: u8, kills: u8) -> Result<()> {
     let player = &mut ctx.accounts.player;
-    let rating_multiplier:f64 = match player.rating {
-        Some(0..=100) => 0.8,
+    let rating_multiplier:f64 = match player.rating { //match rating_multiplier
+        Some(0..=100) => 0.8, //values not final
         Some(101..=200) => 0.9,
         Some(201..) => 1.0,
         None => return Err(errors::ErrorCode::RatingUndefined.into()),
@@ -23,14 +23,14 @@ pub fn payout(ctx: Context<Payout>, placement: u8, kills: u8) -> Result<()> {
 
     let reward_account = &mut ctx.accounts.reward;
     reward_account.calculate_reward(); //Calculate and update the reward account
-    reward_account.reload()?;
+    reward_account.reload()?; //update the reward account
 
     //Define placement_reward based on placement
-    let placement_reward = match placement {
+    let placement_reward = match placement { //match the player placement and update player account
         1 => {
             player.rating = Some(player
                 .rating
-                .unwrap() + 10);
+                .unwrap() + 10); //values not final
             reward_account.victory
         },
         2..=5 => {
@@ -53,8 +53,8 @@ pub fn payout(ctx: Context<Payout>, placement: u8, kills: u8) -> Result<()> {
         },
     };
 
-    let kill_reward = kills as f64 * reward_account.kill;
-    let reward = rating_multiplier * (placement_reward + kill_reward);
+    let kill_reward = kills as f64 * reward_account.kill; //calculate total reward for kills
+    let reward = rating_multiplier * (placement_reward + kill_reward); //calculate total reward
 
     //Define Transfer account
     let cpi_accounts = Transfer {

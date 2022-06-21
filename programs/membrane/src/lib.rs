@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 use maths::*;
 use game_state::*;
 use token_state::*;
+use player_state::*;
 
 pub mod constants;
 pub mod errors;
@@ -25,6 +26,10 @@ pub mod membrane {
 
     pub fn initialize_mint(ctx:Context<MintInitialize>) -> Result<()> {
         token_state::initialize_mint(ctx)
+    }
+
+    pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> { //authority is user
+        player_state::create_player(ctx)
     }
 
     pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
