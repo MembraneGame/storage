@@ -9,10 +9,10 @@ impl Reward {
         let denominator = constants::EULER_NUMBER.powf(10.0-0.5*x.powf(0.4*1.0005_f64.powf(1_f64)))+1_f64; //denominator of math formula
         let multiplier = 1_f64 - 1_f64/(denominator); //math formula
         
-        self.victory = (constants::NFT_PRICE / 16.8) * multiplier; //value of reward given for victory
-        self.top_five = (constants::NFT_PRICE / 67.2) * multiplier; //value of reward given for top 2 - top 5
-        self.top_ten = (constants::NFT_PRICE / 168.0) * multiplier; //value of reward given for top 6 - top 10
-        self.kill = (constants::NFT_PRICE / 120.0 ) * multiplier; //value of reward given for kill
+        self.victory = (constants::NFT_PRICE / constants::VICTORY) * multiplier; //value of reward given for victory
+        self.top_five = (constants::NFT_PRICE / constants::TOP_FIVE) * multiplier; //value of reward given for top 2 - top 5
+        self.top_ten = (constants::NFT_PRICE / constants::TOP_TEN) * multiplier; //value of reward given for top 6 - top 10
+        self.kill = (constants::NFT_PRICE / constants::KILL ) * multiplier; //value of reward given for kill
     }
 }
 
