@@ -1,11 +1,11 @@
-import * as anchor from "@project-serum/anchor";
-import * as spl from "@solana/spl-token";
-import {Program} from "@project-serum/anchor";
-import {Keypair} from "@solana/web3.js";
-import {Membrane} from "../target/types/membrane";
-import {getAirdrop} from "./utils";
+import * as anchor from '@project-serum/anchor';
+import * as spl from '@solana/spl-token';
+import { Program } from '@project-serum/anchor';
+import { Keypair } from '@solana/web3.js';
+import { Membrane } from '../target/types/membrane';
+import { getAirdrop } from './utils';
 
-describe("Membrane", () => {
+describe('Membrane', () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
@@ -14,7 +14,7 @@ describe("Membrane", () => {
   const anchorProvider = program.provider as anchor.AnchorProvider;
 
   const systemProgram = anchor.web3.SystemProgram.programId;
-  const tokenProgram = spl.TOKEN_PROGRAM_ID
+  const tokenProgram = spl.TOKEN_PROGRAM_ID;
 
   let storage: Keypair;
 
@@ -24,14 +24,10 @@ describe("Membrane", () => {
     // admin = authority = storage
     storage = Keypair.generate();
     // Airdrop storage
-    await getAirdrop(
-      program.provider.connection,
-      storage.publicKey,
-      2
-    );
+    await getAirdrop(program.provider.connection, storage.publicKey, 2);
   });
 
-  it("Can initialize mint", async () => {
+  it('Can initialize mint', async () => {
     const mint = Keypair.generate();
     const rent = Keypair.generate();
 
@@ -45,7 +41,6 @@ describe("Membrane", () => {
       })
       .signers([])
       .rpc();
-
   });
 
   // it("Can initialize a reward", async () => {
