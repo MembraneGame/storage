@@ -1,10 +1,8 @@
 use anchor_lang::prelude::*;
-
 use maths::*;
 use game_state::*;
 use token_state::*;
 use player_state::*;
-
 pub mod constants;
 pub mod errors;
 pub mod maths;
