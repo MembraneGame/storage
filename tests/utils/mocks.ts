@@ -27,25 +27,42 @@ export const calculateInitialRewardParams = (): RewardParams => {
   const b = new Decimal(0.5);
   const c = new Decimal(0.4);
   const d = new Decimal(1.0005);
-  const currentUsers = new Decimal(1);
-  const initialUsers = new Decimal(1);
+  const currentUsers = new Decimal(1); // Value is not final
+  const initialUsers = new Decimal(1); // Value is not final
   const nftPrice = new Decimal(NFT_PRICE);
   const victoryParam = new Decimal(VICTORY);
   const topFiveParam = new Decimal(TOP_FIVE);
   const topTenParam = new Decimal(TOP_TEN);
   const killParam = new Decimal(KILL);
 
-  const unixNow = dateNow.divToInt(new Decimal(1000));
-  const x = unixNow.sub(start).divToInt(secInDay);
+  const unixNow = dateNow.divToInt(new Decimal(1000)); // Should be an integer
+  const x = unixNow.sub(start).divToInt(secInDay); // Should be an integer
   const xExp = c.mul(d.pow(currentUsers.div(initialUsers)));
   const denominatorExp = a.sub(b.mul(x.pow(xExp)));
   const denominator = eulerNumber.pow(denominatorExp).add(new Decimal(1));
-  const multiplier = new Decimal(1).sub(new Decimal(1).div(denominator));
+  const multiplier = new Decimal(1)
+    .sub(new Decimal(1).div(denominator))
+    .toDecimalPlaces(12);
 
   const victory = nftPrice.div(victoryParam).mul(multiplier);
   const topFive = nftPrice.div(topFiveParam).mul(multiplier);
   const topTen = nftPrice.div(topTenParam).mul(multiplier);
   const kill = nftPrice.div(killParam).mul(multiplier);
+
+  console.log({
+    dateNow: dateNow.toString(),
+    unixNow: unixNow.toString(),
+    eulerNumber: eulerNumber.toString(),
+    x: x.toString(),
+    xExp: xExp.toString(),
+    exponent: denominatorExp.toString(),
+    denominator: denominator.toString(),
+    multiplier: multiplier.toString(),
+    victory: victory.toString(),
+    topFive: topFive.toString(),
+    topTen: topTen.toString(),
+    kill: kill.toString()
+  });
 
   return {
     victory: victory.toNumber(),

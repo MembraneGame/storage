@@ -72,6 +72,11 @@ describe('Membrane', () => {
 
     const rewardMock = calculateInitialRewardParams();
 
+    console.log({
+      rewardAccount,
+      rewardMock
+    })
+
     for (const key in rewardMock) {
       const result = rewardAccount[key];
       const mock = rewardMock[key];

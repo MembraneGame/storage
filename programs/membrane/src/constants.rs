@@ -15,6 +15,7 @@ pub const KILL: f64 = 120.0;
 
 //UNIX values
 pub const START: i64 = 1654797600; //smart contract start date, program not deployed yet, const now
+// pub const START: i64 = 1654884000;
 pub const SEC_IN_DAY: i64 = 86400; //seconds in day to calculate current day from the start
 
 //Player account
