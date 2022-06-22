@@ -1,17 +1,18 @@
 import * as anchor from '@project-serum/anchor';
 import * as spl from '@solana/spl-token';
 import { Program } from '@project-serum/anchor';
-import { Keypair } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 import { Membrane } from '../target/types/membrane';
-import { getAirdrop } from './utils';
+import { findAssociatedTokenAddress, getAirdrop } from './utils/web3';
 import { expect } from 'chai';
-import { calculateInitialRewardParams } from './utils/mocks';
+import { calculateInitialRewardParams, initializeMint } from './utils/mocks';
+import { getAccount } from '@solana/spl-token';
+import { PLASMA_INITIAL_SUPPLY } from './utils/constants';
 
 describe('Membrane', () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  // const self = anchorProvider.wallet.publicKey;
   const program = anchor.workspace.Membrane as Program<Membrane>;
   const anchorProvider = program.provider as anchor.AnchorProvider;
 
@@ -20,6 +21,8 @@ describe('Membrane', () => {
 
   let storage: Keypair;
   let reward: Keypair;
+  let mintAddress: PublicKey;
+  let storageTokenAddress: PublicKey;
 
   before(async () => {
     // TODO: create first initialize script
@@ -27,25 +30,38 @@ describe('Membrane', () => {
     // admin = authority = storage
     storage = Keypair.generate();
     // Airdrop storage
-    await getAirdrop(program.provider.connection, storage.publicKey);
+    await getAirdrop(anchorProvider.connection, storage.publicKey);
+    // Initialize token mint
+    const { mintAddress: mint, associatedTokenAddress } = await initializeMint(
+      anchorProvider.connection,
+      storage
+    );
+
+    mintAddress = mint;
+    storageTokenAddress = associatedTokenAddress;
     // Generate reward
     reward = Keypair.generate();
   });
 
-  it.skip('Can initialize mint', async () => {
-    const mint = Keypair.generate();
-    const rent = Keypair.generate();
+  it('Can initialize mint', async () => {
+    const associatedTokenAddress = await findAssociatedTokenAddress(
+      storage.publicKey,
+      mintAddress
+    );
 
-    await program.methods
-      .initializeMint()
-      .accounts({
-        mint: mint.publicKey,
-        rent: rent.publicKey,
-        authority: storage.publicKey,
-        tokenProgram
-      })
-      .signers([])
-      .rpc();
+    const tokenAccount = await getAccount(
+      anchorProvider.connection,
+      associatedTokenAddress
+    );
+
+    expect(associatedTokenAddress.toBase58()).to.equal(
+      storageTokenAddress.toBase58()
+    );
+    expect(tokenAccount.mint.toBase58()).to.equal(mintAddress.toBase58());
+    expect(tokenAccount.owner.toBase58()).to.equal(
+      storage.publicKey.toBase58()
+    );
+    expect(Number(tokenAccount.amount)).to.equal(PLASMA_INITIAL_SUPPLY);
   });
 
   it('Can initialize a reward', async () => {
@@ -72,15 +88,34 @@ describe('Membrane', () => {
 
     const rewardMock = calculateInitialRewardParams();
 
-    console.log({
-      rewardAccount,
-      rewardMock
-    })
-
     for (const key in rewardMock) {
       const result = rewardAccount[key];
       const mock = rewardMock[key];
       expect(result).to.be.a('number').and.to.equal(mock);
     }
   });
+
+  it('Can initialize a player', async () => {
+    const player = Keypair.generate();
+    const user = anchorProvider.wallet;
+
+    await program.methods
+      .initializePlayer()
+      .accounts({
+        player: player.publicKey,
+        user: user.publicKey,
+        systemProgram
+      })
+      .signers([player])
+      .rpc();
+
+    const playerAccount = await program.account.player.fetch(player.publicKey);
+
+    expect(playerAccount.user.toBase58()).to.equal(user.publicKey.toBase58());
+    expect(playerAccount.rating.toNumber()).to.equal(0);
+  });
+
+  // sender = storage
+  // vaultToken = storage token associated account
+  // playerToken = player token associated account
 });

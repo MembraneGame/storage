@@ -1,14 +1,51 @@
 import Decimal from 'decimal.js';
 import {
+  DECIMAL_PLACES,
   EULER_NUMBER,
   KILL,
   NFT_PRICE,
+  PLASMA_DECIMALS,
+  PLASMA_INITIAL_SUPPLY,
   SEC_IN_DAY,
   START,
   TOP_FIVE,
   TOP_TEN,
   VICTORY
 } from './constants';
+import { Connection, Keypair, PublicKey } from '@solana/web3.js';
+import { createToken, mintToken } from './web3';
+
+export type MintResult = {
+  mintAddress: PublicKey;
+  associatedTokenAddress: PublicKey;
+};
+
+export const initializeMint = async (
+  connection: Connection,
+  storage: Keypair
+): Promise<MintResult> => {
+  const mintAddress = await createToken(
+    connection,
+    storage,
+    storage.publicKey,
+    null,
+    PLASMA_DECIMALS
+  );
+
+  const tokenAccount = await mintToken(
+    connection,
+    mintAddress,
+    storage,
+    storage.publicKey,
+    storage.publicKey,
+    PLASMA_INITIAL_SUPPLY
+  );
+
+  return {
+    mintAddress,
+    associatedTokenAddress: tokenAccount.address
+  };
+};
 
 export type RewardParams = {
   victory: number;
@@ -40,34 +77,23 @@ export const calculateInitialRewardParams = (): RewardParams => {
   const xExp = c.mul(d.pow(currentUsers.div(initialUsers)));
   const denominatorExp = a.sub(b.mul(x.pow(xExp)));
   const denominator = eulerNumber.pow(denominatorExp).add(new Decimal(1));
-  const multiplier = new Decimal(1)
-    .sub(new Decimal(1).div(denominator))
-    .toDecimalPlaces(12);
+  const multiplier = new Decimal(1).sub(new Decimal(1).div(denominator));
 
   const victory = nftPrice.div(victoryParam).mul(multiplier);
   const topFive = nftPrice.div(topFiveParam).mul(multiplier);
   const topTen = nftPrice.div(topTenParam).mul(multiplier);
   const kill = nftPrice.div(killParam).mul(multiplier);
 
-  console.log({
-    dateNow: dateNow.toString(),
-    unixNow: unixNow.toString(),
-    eulerNumber: eulerNumber.toString(),
-    x: x.toString(),
-    xExp: xExp.toString(),
-    exponent: denominatorExp.toString(),
-    denominator: denominator.toString(),
-    multiplier: multiplier.toString(),
-    victory: victory.toString(),
-    topFive: topFive.toString(),
-    topTen: topTen.toString(),
-    kill: kill.toString()
-  });
-
   return {
-    victory: victory.toNumber(),
-    topFive: topFive.toNumber(),
-    topTen: topTen.toNumber(),
-    kill: kill.toNumber()
+    victory: victory
+      .toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN)
+      .toNumber(),
+    topFive: topFive
+      .toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN)
+      .toNumber(),
+    topTen: topTen
+      .toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN)
+      .toNumber(),
+    kill: kill.toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN).toNumber()
   };
 };
