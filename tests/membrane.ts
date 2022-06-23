@@ -41,13 +41,13 @@ describe('Membrane', () => {
     // Airdrop storage
     await getAirdrop(anchorProvider.connection, storage.publicKey);
     // Initialize token mint
-    const { mintAddress: mint, associatedTokenAddress } = await initializeMint(
+    const mintResult = await initializeMint(
       anchorProvider.connection,
       storage
     );
 
-    mintAddress = mint;
-    storageTokenAddress = associatedTokenAddress;
+    mintAddress = mintResult.mintAddress;
+    storageTokenAddress = mintResult.associatedTokenAddress;
     // Generate reward
     reward = Keypair.generate();
   });

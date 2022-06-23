@@ -4,7 +4,6 @@ export const PLASMA_INITIAL_SUPPLY = 812_500_000;
 export const MEMBRANE_DECIMALS = 12;
 export const MEMBRANE_INITIAL_SUPPLY = 812_500_000;
 
-
 // Mocks
 export const DECIMAL_PLACES = 12;
 
