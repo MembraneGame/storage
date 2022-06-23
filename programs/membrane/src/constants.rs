@@ -9,7 +9,7 @@ pub const EULER_NUMBER: f64 = 2.718_281_828; //const e
 pub const MAX_SIZE_REWARD: usize = FLOAT_MAX*4 + DISCRIMINATOR; //Reward account four f64 field + discriminator
 pub const VICTORY: u64 = 16800000000; //calculate the rewards based on the nft price, values not final
 pub const TOP_FIVE: u64 = 67200000000;
-pub const TOP_TEN: u64= 16800000000;
+pub const TOP_TEN: u64= 168000000000;
 pub const KILL: u64 = 120000000000;
 
 
