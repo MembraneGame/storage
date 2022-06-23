@@ -15,6 +15,7 @@ import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID
 } from '@solana/spl-token';
+import Decimal from 'decimal.js';
 
 export const getAirdrop = async (
   connection: Connection,
@@ -121,4 +122,8 @@ export const sendToken = async (
     fromWallet.publicKey,
     amount
   );
+};
+
+export const adjustSupply = (supply: number, decimals: number): number => {
+  return new Decimal(supply).mul(new Decimal(10).pow(decimals)).toNumber();
 };

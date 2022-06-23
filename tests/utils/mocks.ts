@@ -13,7 +13,7 @@ import {
   VICTORY
 } from './constants';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
-import { createToken, mintToken } from './web3';
+import { adjustSupply, createToken, mintToken } from './web3';
 
 export type MintResult = {
   mintAddress: PublicKey;
@@ -38,7 +38,7 @@ export const initializeMint = async (
     storage,
     storage.publicKey,
     storage.publicKey,
-    PLASMA_INITIAL_SUPPLY
+    adjustSupply(PLASMA_INITIAL_SUPPLY, PLASMA_DECIMALS)
   );
 
   return {

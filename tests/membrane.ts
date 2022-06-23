@@ -11,7 +11,7 @@ import {
 import { expect } from 'chai';
 import { calculateInitialRewardParams, initializeMint } from './utils/mocks';
 import {
-  getAccount,
+  getAccount, getMint,
   getOrCreateAssociatedTokenAccount,
   TOKEN_PROGRAM_ID
 } from '@solana/spl-token';
@@ -53,10 +53,24 @@ describe('Membrane', () => {
   });
 
   it('Can initialize mint', async () => {
+    const mintInfo = await getMint(
+      anchorProvider.connection,
+      mintAddress
+    );
+
+    console.log('mintInfo', mintInfo);
+
     const associatedTokenAddress = await findAssociatedTokenAddress(
       storage.publicKey,
       mintAddress
     );
+
+    // TODO: seems like need to use getTokenAccountBalance to get actual balance
+    const tokenBalance = await anchorProvider.connection.getTokenAccountBalance(
+      associatedTokenAddress
+    );
+
+    console.log('tokenBalance', tokenBalance);
 
     const tokenAccount = await getAccount(
       anchorProvider.connection,
@@ -124,7 +138,7 @@ describe('Membrane', () => {
     expect(playerAccount.rating.toNumber()).to.equal(0);
   });
 
-  it('Can make a single payout', async () => {
+  it.skip('Can make a single payout', async () => {
     const placement = 4;
     const kills = 5;
 

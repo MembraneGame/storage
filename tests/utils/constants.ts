@@ -1,11 +1,13 @@
 // Token
-export const PLASMA_DECIMALS = 12;
-export const PLASMA_INITIAL_SUPPLY = 812_500_000;
-export const MEMBRANE_DECIMALS = 12;
+// export const PLASMA_DECIMALS = 9;
+// export const PLASMA_INITIAL_SUPPLY = 812_500_000;
+export const PLASMA_DECIMALS = 2;
+export const PLASMA_INITIAL_SUPPLY = 2000;
+export const MEMBRANE_DECIMALS = 9;
 export const MEMBRANE_INITIAL_SUPPLY = 812_500_000;
 
 // Mocks
-export const DECIMAL_PLACES = 12;
+export const DECIMAL_PLACES = 9;
 
 // Copy from programs/membrane/src/constants.rs
 
