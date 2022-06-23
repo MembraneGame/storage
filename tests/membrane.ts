@@ -3,10 +3,18 @@ import * as spl from '@solana/spl-token';
 import { Program } from '@project-serum/anchor';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { Membrane } from '../target/types/membrane';
-import { findAssociatedTokenAddress, getAirdrop } from './utils/web3';
+import {
+  findAssociatedTokenAddress,
+  getAirdrop,
+  sendToken
+} from './utils/web3';
 import { expect } from 'chai';
 import { calculateInitialRewardParams, initializeMint } from './utils/mocks';
-import { getAccount } from '@solana/spl-token';
+import {
+  getAccount,
+  getOrCreateAssociatedTokenAccount,
+  TOKEN_PROGRAM_ID
+} from '@solana/spl-token';
 import { PLASMA_INITIAL_SUPPLY } from './utils/constants';
 
 describe('Membrane', () => {
@@ -23,6 +31,7 @@ describe('Membrane', () => {
   let reward: Keypair;
   let mintAddress: PublicKey;
   let storageTokenAddress: PublicKey;
+  let player: Keypair;
 
   before(async () => {
     // TODO: create first initialize script
@@ -96,7 +105,7 @@ describe('Membrane', () => {
   });
 
   it('Can initialize a player', async () => {
-    const player = Keypair.generate();
+    player = Keypair.generate();
     const user = anchorProvider.wallet;
 
     await program.methods
@@ -115,7 +124,49 @@ describe('Membrane', () => {
     expect(playerAccount.rating.toNumber()).to.equal(0);
   });
 
-  // sender = storage
-  // vaultToken = storage token associated account
-  // playerToken = player token associated account
+  it('Can make a single payout', async () => {
+    const placement = 4;
+    const kills = 5;
+
+    const playerTokenAccount = await getOrCreateAssociatedTokenAccount(
+      anchorProvider.connection,
+      storage,
+      mintAddress,
+      player.publicKey
+    );
+
+    console.log('playerTokenAccount', playerTokenAccount);
+
+    await program.methods
+      .payout(placement, kills)
+      .accounts({
+        reward: reward.publicKey,
+        player: player.publicKey,
+        sender: storage.publicKey,
+        vaultToken: storageTokenAddress,
+        playerToken: playerTokenAccount.address,
+        mint: mintAddress,
+        tokenProgram: TOKEN_PROGRAM_ID
+      })
+      .signers([storage])
+      .rpc();
+
+    const paidPlayerTokenAccount = await getAccount(
+      anchorProvider.connection,
+      playerTokenAccount.address
+    );
+
+    console.log('paidPlayerTokenAccount', paidPlayerTokenAccount);
+
+    const storageTokenAccount = await getAccount(
+      anchorProvider.connection,
+      storageTokenAddress
+    );
+
+    console.log('storageTokenAccount', storageTokenAccount);
+
+    const rewardAccount = await program.account.reward.fetch(reward.publicKey);
+
+    console.log('rewardAccount', rewardAccount);
+  });
 });
