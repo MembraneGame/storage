@@ -16,8 +16,8 @@ impl Reward {
     }
 }
 
-fn round_down(value: f64) -> f64 { //function to round down to 12 decimals
-    (value *(10.0_f64.powf(12.0))).floor() / (10.0_f64.powf(12.0))
+fn round_down(value: f64) -> f64 { //function to round down to 9 decimals
+    (value *(10.0_f64.powf(9.0))).floor() / (10.0_f64.powf(9.0))
 }
 
 #[derive(Accounts)]
