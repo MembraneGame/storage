@@ -10,7 +10,7 @@ pub fn initialize_mint(ctx:Context<MintInitialize>) -> Result<()> {
     };
     let cpi_program = ctx.accounts.token_program.to_account_info();
     let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
-    token::initialize_mint(cpi_ctx, 6, ctx.accounts.authority.key, Some(ctx.accounts.authority.key))?;
+    token::initialize_mint(cpi_ctx, 9, ctx.accounts.authority.key, Some(ctx.accounts.authority.key))?;
     Ok(())
 }
 
@@ -59,7 +59,7 @@ pub fn user_sell(ctx: Context<InitializeUser>, amount: u64) -> Result<()> { //au
 
     //Define CpiContext<Tranfer>
     let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
-    token::transfer(cpi_ctx, amount as u64)?;
+    token::transfer(cpi_ctx, amount*10^9)?;
 
     Ok(())
 }

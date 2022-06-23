@@ -38,7 +38,7 @@ pub mod membrane {
         token_state::user_sell(ctx, amount)
     }
 
-    pub fn payout(ctx: Context<Payout>, placement: u8, kills: u8) -> Result<()> {
+    pub fn payout(ctx: Context<Payout>, placement: u64, kills: u64) -> Result<()> {
         game_state::payout(ctx, placement, kills)
     }
 
