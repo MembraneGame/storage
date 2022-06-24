@@ -49,6 +49,11 @@ pub fn payout(ctx: Context<Payout>, placement: u64, kills: u64) -> Result<()> {
             player.rating = Some(player
                 .rating
                 .unwrap() - 2);
+            if player
+            .rating
+            .unwrap() < 0 {
+                player.rating = Some(0);
+            }
             0
         },
     };
