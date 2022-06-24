@@ -4,13 +4,13 @@ pub const PUBKEY_MAX: usize = 32;
 pub const DISCRIMINATOR: usize = 8;
 
 //Consts for reward calculation
-pub const NFT_PRICE: f64 = 150.0; //nft not implemented yet, const now
-pub const EULER_NUMBER: f64 = 2.718_281_828_459; //const e
+pub const NFT_PRICE: u64 = 150000000000; //nft not implemented yet, const now
+pub const EULER_NUMBER: f64 = 2.718_281_828; //const e
 pub const MAX_SIZE_REWARD: usize = FLOAT_MAX*4 + DISCRIMINATOR; //Reward account four f64 field + discriminator
-pub const VICTORY: f64 = 16.8; //calculate the rewards based on the nft price, values not final
-pub const TOP_FIVE: f64 = 67.2;
-pub const TOP_TEN: f64= 168.0;
-pub const KILL: f64 = 120.0;
+pub const VICTORY: u64 = 16800000000; //calculate the rewards based on the nft price, values not final
+pub const TOP_FIVE: u64 = 67200000000;
+pub const TOP_TEN: u64= 168000000000;
+pub const KILL: u64 = 120000000000;
 
 
 //UNIX values

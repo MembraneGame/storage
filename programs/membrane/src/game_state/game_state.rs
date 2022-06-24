@@ -11,7 +11,7 @@ pub fn initialize_reward(ctx: Context<maths::InitializeReward>) -> Result<()> {
 }
 
 //Fn to pay player
-pub fn payout(ctx: Context<Payout>, placement: u8, kills: u8) -> Result<()> {
+pub fn payout(ctx: Context<Payout>, placement: u64, kills: u64) -> Result<()> {
     let player = &mut ctx.accounts.player;
     let rating_multiplier:f64 = match player.rating { //match rating_multiplier
         Some(0..=100) => 0.8, //values not final
@@ -49,12 +49,12 @@ pub fn payout(ctx: Context<Payout>, placement: u8, kills: u8) -> Result<()> {
             player.rating = Some(player
                 .rating
                 .unwrap() - 2);
-            0.0
+            0
         },
     };
 
-    let kill_reward = kills as f64 * reward_account.kill; //calculate total reward for kills
-    let reward = rating_multiplier * (placement_reward + kill_reward); //calculate total reward
+    let kill_reward = kills * reward_account.kill; //calculate total reward for kills
+    let reward = (rating_multiplier * (placement_reward + kill_reward) as f64) as u64; //calculate total reward
 
     //Define Transfer account
     let cpi_accounts = Transfer {
@@ -77,7 +77,7 @@ pub fn payout(ctx: Context<Payout>, placement: u8, kills: u8) -> Result<()> {
     let cpi_program = ctx.accounts.token_program.to_account_info();
     //Define CpiContext<Transfer>
     let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
-    token::transfer(cpi_ctx, reward as u64)?;
+    token::transfer(cpi_ctx, reward)?;
 
     Ok(())
 }
