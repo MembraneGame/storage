@@ -42,9 +42,9 @@ pub mod membrane {
         game_state::payout(ctx, placement, kills)
     }
 
-    pub fn burn_token(ctx_burn: Context<BurnToken>, amount:u64) -> Result<()> {
-        token_state::burn_token(ctx_burn, amount)
-    }
+    // pub fn burn_token(ctx_burn: Context<BurnToken>, amount:u64) -> Result<()> {
+    //     token_state::burn_token(ctx_burn, amount)
+    // }
 
 }
 
