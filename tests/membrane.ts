@@ -9,7 +9,12 @@ import {
   getAirdrop
 } from './utils/web3';
 import { expect } from 'chai';
-import {calculateInitialRewardParams, calculatePlayerPayout, initializeMint} from './utils/mocks';
+import {
+  calculateInitialRewardParams,
+  calculatePlayerPayout,
+  generateRandomGameResult,
+  initializeMint
+} from './utils/mocks';
 import {
   getAccount,
   getMint,
@@ -75,7 +80,9 @@ describe('Membrane', () => {
       storageTokenAddress.toBase58()
     );
     expect(tokenBalance.value.decimals).to.equal(PLASMA_DECIMALS);
-    expect(parseFloat(tokenBalance.value.uiAmountString)).to.equal(PLASMA_INITIAL_SUPPLY);
+    expect(parseFloat(tokenBalance.value.uiAmountString)).to.equal(
+      PLASMA_INITIAL_SUPPLY
+    );
     expect(tokenAccount.mint.toBase58()).to.equal(mintAddress.toBase58());
     expect(tokenAccount.owner.toBase58()).to.equal(
       storage.publicKey.toBase58()
@@ -137,20 +144,25 @@ describe('Membrane', () => {
   });
 
   it('Can make a single payout', async () => {
-    const placement = new anchor.BN(15);
-    const kills = new anchor.BN(1);
+    const { placement, kills } = generateRandomGameResult();
 
-    const rewardAccount = await program.account.reward.fetch(reward.publicKey);
-    const playerAccountBefore = await program.account.player.fetch(player.publicKey);
-
+    const playerAccountBefore = await program.account.player.fetch(
+      player.publicKey
+    );
+    const storageTokenBalanceBefore =
+      await anchorProvider.connection.getTokenAccountBalance(
+        storageTokenAddress
+      );
     const playerTokenAccount = await getOrCreateAssociatedTokenAccount(
       anchorProvider.connection,
       storage,
       mintAddress,
       player.publicKey
     );
-
-    console.log('playerTokenAccount', playerTokenAccount);
+    const playerTokenBalanceBefore =
+      await anchorProvider.connection.getTokenAccountBalance(
+        playerTokenAccount.address
+      );
 
     await program.methods
       .payout(placement, kills)
@@ -166,38 +178,43 @@ describe('Membrane', () => {
       .signers([storage])
       .rpc();
 
-    const paidPlayerTokenAccount = await getAccount(
-      anchorProvider.connection,
-      playerTokenAccount.address
+    const storageTokenBalanceAfter =
+      await anchorProvider.connection.getTokenAccountBalance(
+        storageTokenAddress
+      );
+    const playerTokenBalanceAfter =
+      await anchorProvider.connection.getTokenAccountBalance(
+        playerTokenAccount.address
+      );
+    const playerAccountAfter = await program.account.player.fetch(
+      player.publicKey
     );
 
-    console.log('paidPlayerTokenAccount', paidPlayerTokenAccount);
-
-    const storageTokenAccount = await getAccount(
-      anchorProvider.connection,
-      storageTokenAddress
+    const rewardMock = calculateInitialRewardParams(PLASMA_DECIMALS);
+    const { rewardAmount, ratingChange } = calculatePlayerPayout(
+      placement,
+      kills,
+      playerAccountBefore.rating,
+      rewardMock
     );
 
-    console.log('storageTokenAccount', storageTokenAccount);
+    expect(
+      new anchor.BN(storageTokenBalanceAfter.value.amount).eq(
+        new anchor.BN(storageTokenBalanceBefore.value.amount).sub(rewardAmount)
+      )
+    ).to.be.true;
+    expect(
+      new anchor.BN(playerTokenBalanceAfter.value.amount).eq(
+        new anchor.BN(playerTokenBalanceBefore.value.amount).add(rewardAmount)
+      )
+    ).to.be.true;
 
-    console.log('rewardAccount', rewardAccount);
+    const safeRatingChange = playerAccountBefore.rating.add(ratingChange).lt(new anchor.BN(0))
+      ? new anchor.BN(0)
+      : ratingChange;
 
-    const storageTokenBalance = await anchorProvider.connection.getTokenAccountBalance(
-      storageTokenAddress
-    );
-
-    console.log('storageTokenBalance', storageTokenBalance);
-
-    const playerTokenBalance = await anchorProvider.connection.getTokenAccountBalance(
-      playerTokenAccount.address
-    );
-
-    console.log('playerTokenBalance', playerTokenBalance);
-
-    const playerAccountAfter = await program.account.player.fetch(player.publicKey);
-
-    console.log('playerAccountAfter', playerAccountAfter);
-
-    calculatePlayerPayout(placement, kills, playerAccountBefore.rating, rewardAccount);
+    expect(
+      playerAccountBefore.rating.add(safeRatingChange).toNumber()
+    ).to.be.equal(playerAccountAfter.rating.toNumber());
   });
 });

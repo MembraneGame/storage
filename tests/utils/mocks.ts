@@ -106,13 +106,19 @@ export const calculateInitialRewardParams = (
   };
 };
 
-export type LevelRangeValueTuple<T> = [T, number];
+export const getRandomInt = (min: number, max: number): number => {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+export type LevelRangeValueTuple<T> = [T, Decimal];
 
 export const getLevelValue = <T extends Array<unknown>>(
   levelRanges: LevelRangeValueTuple<T>[],
   level: number
-): number => {
-  let result: number;
+): Decimal => {
+  let result: Decimal;
   for (const [range, value] of levelRanges) {
     const [start, end] = range;
     if (start && end) {
@@ -129,7 +135,6 @@ export const getLevelValue = <T extends Array<unknown>>(
       result = value;
     }
   }
-  console.log(result);
   return result;
 };
 
@@ -137,31 +142,85 @@ export type RatingLevel = [number, number?];
 
 export type PlacementLevel = [number?, number?];
 
+export type PlayerPayoutResult = {
+  rewardAmount: BN;
+  ratingChange: BN;
+};
+
+export const RATING_LEVEL_MULTIPLIERS: LevelRangeValueTuple<RatingLevel>[] = [
+  [[0, 100], new Decimal(0.8)],
+  [[101, 200], new Decimal(0.9)],
+  [[201, Infinity], new Decimal(1)]
+];
+export const RATING_CHANGE: LevelRangeValueTuple<PlacementLevel>[] = [
+  [[1], new Decimal(10)],
+  [[2, 5], new Decimal(5)],
+  [[6, 10], new Decimal(2)],
+  [[], new Decimal(-2)]
+];
+
 export const calculatePlayerPayout = (
   placement: BN,
   kills: BN,
   rating: BN,
   rewardAccount: RewardParams
-) => {
-  const RATING_LEVEL_MULTIPLIERS: LevelRangeValueTuple<RatingLevel>[] = [
-    [[0, 100], 0.8],
-    [[101, 200], 0.9],
-    [[201, Infinity], 1]
-  ];
-  const RATING_CHANGE: LevelRangeValueTuple<PlacementLevel>[] = [
-    [[1], 10],
-    [[2, 5], 5],
-    [[6, 10], 2],
-    [[], -2]
-  ];
+): PlayerPayoutResult => {
   const PLACEMENT_REWARDS: LevelRangeValueTuple<PlacementLevel>[] = [
-    [[1], 10],
-    [[2, 5], 5],
-    [[6, 10], 2],
-    [[], -2]
+    [[1], new Decimal(rewardAccount.victory.toNumber())],
+    [[2, 5], new Decimal(rewardAccount.topFive.toNumber())],
+    [[6, 10], new Decimal(rewardAccount.topTen.toNumber())],
+    [[], new Decimal(0)]
   ];
-  const ratingMultiplier = getLevelValue(RATING_LEVEL_MULTIPLIERS, rating.toNumber());
-  const ratingChange = getLevelValue(PLACEMENT_REWARDS, placement.toNumber());
-  const placementReward = 0;
-  const killReward = kills.mul(rewardAccount.kill);
+  const ratingMultiplier = getLevelValue(
+    RATING_LEVEL_MULTIPLIERS,
+    rating.toNumber()
+  );
+  const ratingChange = getLevelValue(RATING_CHANGE, placement.toNumber());
+  const placementReward = getLevelValue(
+    PLACEMENT_REWARDS,
+    placement.toNumber()
+  );
+  const killReward = new Decimal(kills.mul(rewardAccount.kill).toNumber());
+
+  const reward = ratingMultiplier
+    .mul(placementReward.add(killReward))
+    .toDecimalPlaces(0, Decimal.ROUND_DOWN);
+
+  return {
+    rewardAmount: new BN(reward.toNumber()),
+    ratingChange: new BN(ratingChange.toNumber())
+  };
+};
+
+export type GameResult = {
+  placement: BN;
+  kills: BN;
+};
+
+export const generateRandomGameResult = (players: number = 15): GameResult => {
+  const placement = getRandomInt(1, players);
+  const min = placement > 3 ? 0 : 1;
+  const kills = getRandomInt(min, players - placement);
+  return {
+    placement: new BN(placement),
+    kills: new BN(kills)
+  };
+};
+
+export const generateGameResults = (players: number = 15): GameResult[] => {
+  let totalKills = players;
+  const results = [];
+
+  for (let p = 1; p <= players; p++) {
+    const min = p > 3 ? 0 : 1;
+    const max = totalKills - min;
+    const k = getRandomInt(min, max);
+    totalKills = totalKills - k;
+    results.push({
+      placement: new BN(p),
+      kills: new BN(k)
+    });
+  }
+
+  return results;
 };
