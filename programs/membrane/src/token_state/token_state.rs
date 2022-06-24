@@ -36,14 +36,16 @@ pub struct InitializeUser<'info> {
     #[account(mut)]
     pub vault_token: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
-}
-
-#[derive(Accounts)]
-pub struct BurnToken<'info> {
-    pub mint: Account<'info, Mint>,
-    #[account(mut)]
-    pub vault_token: Account<'info, TokenAccount>,
     /// CHECK: Safe because we don't read or write from the account
     pub authority: AccountInfo<'info>,
-    pub token_program: Program<'info, Token>,
 }
+
+// #[derive(Accounts)]
+// pub struct BurnToken<'info> {
+//     pub mint: Account<'info, Mint>,
+//     #[account(mut)]
+//     pub vault_token: Account<'info, TokenAccount>,
+//     /// CHECK: Safe because we don't read or write from the account
+//     pub authority: AccountInfo<'info>,
+//     pub token_program: Program<'info, Token>,
+// }
