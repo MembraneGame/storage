@@ -54,7 +54,9 @@ export type RewardParams = {
   kill: number;
 };
 
-export const calculateInitialRewardParams = (): RewardParams => {
+export const calculateInitialRewardParams = (
+  decimals: number
+): RewardParams => {
   // Use Decimal for operations with numbers
   const dateNow = new Decimal(Date.now());
   const start = new Decimal(START);
@@ -77,7 +79,10 @@ export const calculateInitialRewardParams = (): RewardParams => {
   const xExp = c.mul(d.pow(currentUsers.div(initialUsers)));
   const denominatorExp = a.sub(b.mul(x.pow(xExp)));
   const denominator = eulerNumber.pow(denominatorExp).add(new Decimal(1));
-  const multiplier = new Decimal(1).sub(new Decimal(1).div(denominator));
+  const multiplier = new Decimal(1)
+    .sub(new Decimal(1).div(denominator))
+    .mul(new Decimal(10).pow(decimals))
+    .toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN);
 
   const victory = nftPrice.div(victoryParam).mul(multiplier);
   const topFive = nftPrice.div(topFiveParam).mul(multiplier);
@@ -96,4 +101,8 @@ export const calculateInitialRewardParams = (): RewardParams => {
       .toNumber(),
     kill: kill.toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN).toNumber()
   };
+};
+
+export const calculatePlayerPayout = (placement, kills, ) => {
+
 };

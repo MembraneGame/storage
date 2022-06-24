@@ -4,18 +4,19 @@ import { Program } from '@project-serum/anchor';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { Membrane } from '../target/types/membrane';
 import {
+  adjustSupply,
   findAssociatedTokenAddress,
-  getAirdrop,
-  sendToken
+  getAirdrop
 } from './utils/web3';
 import { expect } from 'chai';
 import { calculateInitialRewardParams, initializeMint } from './utils/mocks';
 import {
-  getAccount, getMint,
+  getAccount,
+  getMint,
   getOrCreateAssociatedTokenAccount,
   TOKEN_PROGRAM_ID
 } from '@solana/spl-token';
-import { PLASMA_INITIAL_SUPPLY } from './utils/constants';
+import { PLASMA_DECIMALS, PLASMA_INITIAL_SUPPLY } from './utils/constants';
 
 describe('Membrane', () => {
   // Configure the client to use the local cluster.
@@ -41,10 +42,7 @@ describe('Membrane', () => {
     // Airdrop storage
     await getAirdrop(anchorProvider.connection, storage.publicKey);
     // Initialize token mint
-    const mintResult = await initializeMint(
-      anchorProvider.connection,
-      storage
-    );
+    const mintResult = await initializeMint(anchorProvider.connection, storage);
 
     mintAddress = mintResult.mintAddress;
     storageTokenAddress = mintResult.associatedTokenAddress;
@@ -53,38 +51,38 @@ describe('Membrane', () => {
   });
 
   it('Can initialize mint', async () => {
-    const mintInfo = await getMint(
-      anchorProvider.connection,
-      mintAddress
-    );
-
-    console.log('mintInfo', mintInfo);
+    const mintInfo = await getMint(anchorProvider.connection, mintAddress);
 
     const associatedTokenAddress = await findAssociatedTokenAddress(
       storage.publicKey,
       mintAddress
     );
 
-    // TODO: seems like need to use getTokenAccountBalance to get actual balance
     const tokenBalance = await anchorProvider.connection.getTokenAccountBalance(
       associatedTokenAddress
     );
-
-    console.log('tokenBalance', tokenBalance);
 
     const tokenAccount = await getAccount(
       anchorProvider.connection,
       associatedTokenAddress
     );
 
+    expect(mintInfo.decimals).to.equal(PLASMA_DECIMALS);
+    expect(mintInfo.mintAuthority.toBase58()).to.equal(
+      storage.publicKey.toBase58()
+    );
     expect(associatedTokenAddress.toBase58()).to.equal(
       storageTokenAddress.toBase58()
     );
+    expect(tokenBalance.value.decimals).to.equal(PLASMA_DECIMALS);
+    expect(parseFloat(tokenBalance.value.uiAmountString)).to.equal(PLASMA_INITIAL_SUPPLY);
     expect(tokenAccount.mint.toBase58()).to.equal(mintAddress.toBase58());
     expect(tokenAccount.owner.toBase58()).to.equal(
       storage.publicKey.toBase58()
     );
-    expect(Number(tokenAccount.amount)).to.equal(PLASMA_INITIAL_SUPPLY);
+    expect(tokenAccount.amount).to.equal(
+      BigInt(adjustSupply(PLASMA_INITIAL_SUPPLY, PLASMA_DECIMALS))
+    );
   });
 
   it('Can initialize a reward', async () => {
@@ -103,18 +101,18 @@ describe('Membrane', () => {
 
     // Example result
     // {
-    //   victory: 8.927076289218453,
-    //   topFive: 2.2317690723046133,
-    //   topTen: 0.8927076289218454,
-    //   kill: 1.2497906804905836
+    //   victory: 8926864892,
+    //   topFive: 2231716223,
+    //   topTen: 892686489,
+    //   kill: 1249761085
     // }
 
-    const rewardMock = calculateInitialRewardParams();
+    const rewardMock = calculateInitialRewardParams(PLASMA_DECIMALS);
 
     for (const key in rewardMock) {
       const result = rewardAccount[key];
       const mock = rewardMock[key];
-      expect(result).to.be.a('number').and.to.equal(mock);
+      expect(result.eq(new anchor.BN(mock))).to.be.true;
     }
   });
 
@@ -138,9 +136,9 @@ describe('Membrane', () => {
     expect(playerAccount.rating.toNumber()).to.equal(0);
   });
 
-  it.skip('Can make a single payout', async () => {
-    const placement = 4;
-    const kills = 5;
+  it('Can make a single payout', async () => {
+    const placement = new anchor.BN(1);
+    const kills = new anchor.BN(1);
 
     const playerTokenAccount = await getOrCreateAssociatedTokenAccount(
       anchorProvider.connection,
@@ -182,5 +180,17 @@ describe('Membrane', () => {
     const rewardAccount = await program.account.reward.fetch(reward.publicKey);
 
     console.log('rewardAccount', rewardAccount);
+
+    const storageTokenBalance = await anchorProvider.connection.getTokenAccountBalance(
+      storageTokenAddress
+    );
+
+    console.log('storageTokenBalance', storageTokenBalance);
+
+    const playerTokenBalance = await anchorProvider.connection.getTokenAccountBalance(
+      playerTokenAccount.address
+    );
+
+    console.log('playerTokenBalance', playerTokenBalance);
   });
 });
