@@ -26,9 +26,9 @@ pub struct MintInitialize<'info> {
 }
 
 #[derive(Accounts)]
-pub struct InitializeUser<'info> {
-    /// CHECK: Safe because we don't read or write from the account
-    pub program_signer: AccountInfo<'info>,
+pub struct SellAndBurn<'info> {
+    // /// CHECK: Safe because we don't read or write from the account
+    // pub program_signer: AccountInfo<'info>,
     pub player: Signer<'info>,
     pub mint: Account<'info, Mint>,
     #[account(mut)]
