@@ -9,7 +9,7 @@ import {
   getAirdrop
 } from './utils/web3';
 import { expect } from 'chai';
-import { calculateInitialRewardParams, initializeMint } from './utils/mocks';
+import {calculateInitialRewardParams, calculatePlayerPayout, initializeMint} from './utils/mocks';
 import {
   getAccount,
   getMint,
@@ -112,7 +112,7 @@ describe('Membrane', () => {
     for (const key in rewardMock) {
       const result = rewardAccount[key];
       const mock = rewardMock[key];
-      expect(result.eq(new anchor.BN(mock))).to.be.true;
+      expect(result.eq(mock)).to.be.true;
     }
   });
 
@@ -137,8 +137,11 @@ describe('Membrane', () => {
   });
 
   it('Can make a single payout', async () => {
-    const placement = new anchor.BN(1);
+    const placement = new anchor.BN(15);
     const kills = new anchor.BN(1);
+
+    const rewardAccount = await program.account.reward.fetch(reward.publicKey);
+    const playerAccountBefore = await program.account.player.fetch(player.publicKey);
 
     const playerTokenAccount = await getOrCreateAssociatedTokenAccount(
       anchorProvider.connection,
@@ -177,8 +180,6 @@ describe('Membrane', () => {
 
     console.log('storageTokenAccount', storageTokenAccount);
 
-    const rewardAccount = await program.account.reward.fetch(reward.publicKey);
-
     console.log('rewardAccount', rewardAccount);
 
     const storageTokenBalance = await anchorProvider.connection.getTokenAccountBalance(
@@ -192,5 +193,11 @@ describe('Membrane', () => {
     );
 
     console.log('playerTokenBalance', playerTokenBalance);
+
+    const playerAccountAfter = await program.account.player.fetch(player.publicKey);
+
+    console.log('playerAccountAfter', playerAccountAfter);
+
+    calculatePlayerPayout(placement, kills, playerAccountBefore.rating, rewardAccount);
   });
 });

@@ -1,3 +1,4 @@
+import { BN } from '@project-serum/anchor';
 import Decimal from 'decimal.js';
 import {
   DECIMAL_PLACES,
@@ -48,10 +49,10 @@ export const initializeMint = async (
 };
 
 export type RewardParams = {
-  victory: number;
-  topFive: number;
-  topTen: number;
-  kill: number;
+  victory: BN;
+  topFive: BN;
+  topTen: BN;
+  kill: BN;
 };
 
 export const calculateInitialRewardParams = (
@@ -90,19 +91,77 @@ export const calculateInitialRewardParams = (
   const kill = nftPrice.div(killParam).mul(multiplier);
 
   return {
-    victory: victory
-      .toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN)
-      .toNumber(),
-    topFive: topFive
-      .toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN)
-      .toNumber(),
-    topTen: topTen
-      .toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN)
-      .toNumber(),
-    kill: kill.toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN).toNumber()
+    victory: new BN(
+      victory.toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN).toNumber()
+    ),
+    topFive: new BN(
+      topFive.toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN).toNumber()
+    ),
+    topTen: new BN(
+      topTen.toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN).toNumber()
+    ),
+    kill: new BN(
+      kill.toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN).toNumber()
+    )
   };
 };
 
-export const calculatePlayerPayout = (placement, kills, ) => {
+export type LevelRangeValueTuple<T> = [T, number];
 
+export const getLevelValue = <T extends Array<unknown>>(
+  levelRanges: LevelRangeValueTuple<T>[],
+  level: number
+): number => {
+  let result: number;
+  for (const [range, value] of levelRanges) {
+    const [start, end] = range;
+    if (start && end) {
+      if (start <= level && level <= end) {
+        result = value;
+        break;
+      }
+    } else if (start) {
+      if (start === level) {
+        result = value;
+        break;
+      }
+    } else {
+      result = value;
+    }
+  }
+  console.log(result);
+  return result;
+};
+
+export type RatingLevel = [number, number?];
+
+export type PlacementLevel = [number?, number?];
+
+export const calculatePlayerPayout = (
+  placement: BN,
+  kills: BN,
+  rating: BN,
+  rewardAccount: RewardParams
+) => {
+  const RATING_LEVEL_MULTIPLIERS: LevelRangeValueTuple<RatingLevel>[] = [
+    [[0, 100], 0.8],
+    [[101, 200], 0.9],
+    [[201, Infinity], 1]
+  ];
+  const RATING_CHANGE: LevelRangeValueTuple<PlacementLevel>[] = [
+    [[1], 10],
+    [[2, 5], 5],
+    [[6, 10], 2],
+    [[], -2]
+  ];
+  const PLACEMENT_REWARDS: LevelRangeValueTuple<PlacementLevel>[] = [
+    [[1], 10],
+    [[2, 5], 5],
+    [[6, 10], 2],
+    [[], -2]
+  ];
+  const ratingMultiplier = getLevelValue(RATING_LEVEL_MULTIPLIERS, rating.toNumber());
+  const ratingChange = getLevelValue(PLACEMENT_REWARDS, placement.toNumber());
+  const placementReward = 0;
+  const killReward = kills.mul(rewardAccount.kill);
 };
