@@ -1,11 +1,15 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, Mint, TokenAccount, Transfer};
+use crate::maths::DaysPassed;
 use crate::player_state;
 use crate::errors;
 use crate::maths;
+pub use crate::constants;
 
 pub fn initialize_reward(ctx: Context<maths::InitializeReward>) -> Result<()> {
     let reward_account = &mut ctx.accounts.reward;
+    let days = &mut ctx.accounts.days; //define days account
+    days.days = 0; //set days to 0
     reward_account.calculate_reward();
     Ok(())
 }
@@ -20,10 +24,19 @@ pub fn payout(ctx: Context<Payout>, placement: u64, kills: u64) -> Result<()> {
         None => return Err(errors::ErrorCode::RatingUndefined.into()),
         _ => return Err(errors::ErrorCode::RatingOverflow.into()),
     };
-
     let reward_account = &mut ctx.accounts.reward;
-    reward_account.calculate_reward(); //Calculate and update the reward account
-    reward_account.reload()?; //update the reward account
+
+    let days = &mut ctx.accounts.days; //define days account
+
+    let unix_now = Clock::get().unwrap().unix_timestamp; //current time to compare
+
+    if ((unix_now - constants::START)/constants::SEC_IN_DAY) != days.days { //if statement to check whether next day has begun
+        reward_account.calculate_reward(); //Calculate and update the reward account
+        reward_account.reload()?; //update the reward account if new day begun
+        days.days = (unix_now - constants::START)/constants::SEC_IN_DAY;
+    }
+
+
 
     //Define placement_reward based on placement
     let placement_reward = match placement { //match the player placement and update player account
@@ -98,6 +111,8 @@ pub struct Payout<'info> {
         pub vault_token: Account<'info, TokenAccount>,
         #[account(mut)]
         pub player_token: Account<'info, TokenAccount>,
+        #[account(mut)]
+        pub days: Account<'info, DaysPassed>,
         pub mint: Account<'info, Mint>,
         pub token_program: Program<'info, Token>,
 }
