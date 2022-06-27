@@ -1,6 +1,12 @@
 import * as anchor from '@project-serum/anchor';
-import * as spl from '@solana/spl-token';
 import { Program } from '@project-serum/anchor';
+import * as spl from '@solana/spl-token';
+import {
+  getAccount,
+  getMint,
+  getOrCreateAssociatedTokenAccount,
+  TOKEN_PROGRAM_ID
+} from '@solana/spl-token';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import { Membrane } from '../target/types/membrane';
 import {
@@ -15,12 +21,6 @@ import {
   generateRandomGameResult,
   initializeMint
 } from './utils/mocks';
-import {
-  getAccount,
-  getMint,
-  getOrCreateAssociatedTokenAccount,
-  TOKEN_PROGRAM_ID
-} from '@solana/spl-token';
 import { PLASMA_DECIMALS, PLASMA_INITIAL_SUPPLY } from './utils/constants';
 
 describe('Membrane', () => {
@@ -209,7 +209,9 @@ describe('Membrane', () => {
       )
     ).to.be.true;
 
-    const safeRatingChange = playerAccountBefore.rating.add(ratingChange).lt(new anchor.BN(0))
+    const safeRatingChange = playerAccountBefore.rating
+      .add(ratingChange)
+      .lt(new anchor.BN(0))
       ? new anchor.BN(0)
       : ratingChange;
 
@@ -218,7 +220,58 @@ describe('Membrane', () => {
     ).to.be.equal(playerAccountAfter.rating.toNumber());
   });
 
-  it('User can sell', async () => {
+  it('User can sell the token', async () => {
+    const amount = new anchor.BN(0);
 
-  })
+    const storageTokenBalanceBefore =
+      await anchorProvider.connection.getTokenAccountBalance(
+        storageTokenAddress
+      );
+    const playerTokenAddress = await findAssociatedTokenAddress(
+      player.publicKey,
+      mintAddress
+    );
+    const playerTokenBalanceBefore =
+      await anchorProvider.connection.getTokenAccountBalance(
+        playerTokenAddress
+      );
+
+    console.log('playerTokenBalanceBefore', playerTokenBalanceBefore);
+
+    await program.methods
+      .userSell(amount)
+      .accounts({
+        player: player.publicKey,
+        mint: mintAddress,
+        vaultToken: storageTokenAddress,
+        playerToken: playerTokenAddress,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        authority: storage.publicKey
+      })
+      .signers([player])
+      .rpc();
+
+    const storageTokenBalanceAfter =
+      await anchorProvider.connection.getTokenAccountBalance(
+        storageTokenAddress
+      );
+    const playerTokenBalanceAfter =
+      await anchorProvider.connection.getTokenAccountBalance(
+        playerTokenAddress
+      );
+
+    expect(
+      new anchor.BN(storageTokenBalanceAfter.value.amount).eq(
+        new anchor.BN(storageTokenBalanceBefore.value.amount).add(
+          // Half of the amount is burned
+          amount.div(new anchor.BN(2))
+        )
+      )
+    ).to.be.true;
+    expect(
+      new anchor.BN(playerTokenBalanceAfter.value.amount).eq(
+        new anchor.BN(playerTokenBalanceBefore.value.amount).sub(amount)
+      )
+    ).to.be.true;
+  });
 });
