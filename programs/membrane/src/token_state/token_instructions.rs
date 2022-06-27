@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, MintTo, Burn, Transfer, InitializeMint};
-use crate::token_state::{MintToken, MintInitialize, InitializeUser};
+use crate::token_state::{MintToken, MintInitialize, SellAndBurn};
 
 //Fn to initialize mint
 pub fn initialize_mint(ctx:Context<MintInitialize>) -> Result<()> {
@@ -32,7 +32,7 @@ pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
 }
 
 //Fn when user sells tokens back to the storage
-pub fn user_sell(ctx: Context<InitializeUser>, amount: u64) -> Result<()> { //authority is user, NOT the storage
+pub fn user_sell(ctx: Context<SellAndBurn>, amount: u64) -> Result<()> { //signer is user, authority is the storage
     //Define Transfer account
     let cpi_accounts = Transfer {
         from: ctx
