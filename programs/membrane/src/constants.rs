@@ -20,3 +20,5 @@ pub const SEC_IN_DAY: i64 = 86400; //seconds in day to calculate current day fro
 
 //Player account
 pub const MAX_PLAYER_SIZE: usize = PUBKEY_MAX + (1+FLOAT_MAX) + DISCRIMINATOR; //pubkey + rating wrapped in some + discriminator for Player account
+//DaysPassed account
+pub const MAX_DAYS_SIZE: usize = FLOAT_MAX + DISCRIMINATOR; //days(u64) + discriminator

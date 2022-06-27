@@ -20,6 +20,8 @@ impl Reward {
 pub struct InitializeReward<'info> {
     #[account(init, payer = payer, space = constants::MAX_SIZE_REWARD)]
     pub reward: Account<'info, Reward>,
+    #[account(init, payer = payer, space = constants::MAX_DAYS_SIZE)]
+    pub days : Account<'info, DaysPassed>,
     #[account(mut)]
     pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -37,4 +39,9 @@ pub struct Reward {
     pub top_five: u64,
     pub top_ten: u64,
     pub kill: u64,
+}
+
+#[account]
+pub struct DaysPassed {
+    pub days: i64,
 }

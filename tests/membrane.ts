@@ -217,4 +217,8 @@ describe('Membrane', () => {
       playerAccountBefore.rating.add(safeRatingChange).toNumber()
     ).to.be.equal(playerAccountAfter.rating.toNumber());
   });
+
+  it('User can sell', async () => {
+
+  })
 });
