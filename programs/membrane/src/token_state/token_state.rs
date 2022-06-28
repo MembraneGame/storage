@@ -36,8 +36,7 @@ pub struct SellAndBurn<'info> {
     #[account(mut)]
     pub vault_token: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
-    /// CHECK: Safe because we don't read or write from the account
-    pub authority: AccountInfo<'info>,
+    pub authority: Signer<'info>,
 }
 
 // #[derive(Accounts)]

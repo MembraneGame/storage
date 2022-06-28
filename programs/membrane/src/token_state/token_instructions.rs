@@ -32,7 +32,7 @@ pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
 }
 
 //Fn when user sells tokens back to the storage
-pub fn user_sell(ctx: Context<SellAndBurn>, amount: u64) -> Result<()> { //signer is user, authority is the storage
+pub fn user_sell(ctx: Context<SellAndBurn>, amount: u64) -> Result<()> { //signer is user, authority is the storage, amount in 10^9
     //Define Transfer account
     let cpi_accounts = Transfer {
         from: ctx
@@ -59,7 +59,7 @@ pub fn user_sell(ctx: Context<SellAndBurn>, amount: u64) -> Result<()> { //signe
 
     //Define CpiContext<Tranfer>
     let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
-    token::transfer(cpi_ctx, amount*10^9)?;
+    token::transfer(cpi_ctx, amount)?;
 
     //Define Burn account
     let cpi_burn_accounts = Burn {
