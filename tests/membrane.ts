@@ -12,7 +12,7 @@ import { Membrane } from '../target/types/membrane';
 import {
   adjustSupply,
   findAssociatedTokenAddress,
-  getAirdrop
+  getAirdrop, sendToken
 } from './utils/web3';
 import { expect } from 'chai';
 import {
@@ -45,7 +45,7 @@ describe('Membrane', () => {
     // admin = authority = storage
     storage = Keypair.generate();
     // Airdrop storage
-    await getAirdrop(anchorProvider.connection, storage.publicKey);
+    await getAirdrop(anchorProvider.connection, storage.publicKey, 10);
     // Initialize token mint
     const mintResult = await initializeMint(anchorProvider.connection, storage);
 
@@ -220,8 +220,19 @@ describe('Membrane', () => {
     ).to.be.equal(playerAccountAfter.rating.toNumber());
   });
 
-  it.skip('User can sell the token', async () => {
-    const amount = new anchor.BN(0);
+  it('User can sell the token', async () => {
+    const amountToSell = new anchor.BN(
+      adjustSupply(10, PLASMA_DECIMALS)
+    );
+
+    // Send some tokens to the player
+    await sendToken(
+      anchorProvider.connection,
+      mintAddress,
+      storage,
+      player.publicKey,
+      amountToSell.toNumber()
+    );
 
     const storageTokenBalanceBefore =
       await anchorProvider.connection.getTokenAccountBalance(
@@ -236,10 +247,8 @@ describe('Membrane', () => {
         playerTokenAddress
       );
 
-    console.log('playerTokenBalanceBefore', playerTokenBalanceBefore);
-
     await program.methods
-      .userSell(amount)
+      .userSell(amountToSell)
       .accounts({
         player: player.publicKey,
         mint: mintAddress,
@@ -248,7 +257,7 @@ describe('Membrane', () => {
         tokenProgram: TOKEN_PROGRAM_ID,
         authority: storage.publicKey
       })
-      .signers([player])
+      .signers([player, storage])
       .rpc();
 
     const storageTokenBalanceAfter =
@@ -264,13 +273,13 @@ describe('Membrane', () => {
       new anchor.BN(storageTokenBalanceAfter.value.amount).eq(
         new anchor.BN(storageTokenBalanceBefore.value.amount).add(
           // Half of the amount is burned
-          amount.div(new anchor.BN(2))
+          amountToSell.div(new anchor.BN(2))
         )
       )
     ).to.be.true;
     expect(
       new anchor.BN(playerTokenBalanceAfter.value.amount).eq(
-        new anchor.BN(playerTokenBalanceBefore.value.amount).sub(amount)
+        new anchor.BN(playerTokenBalanceBefore.value.amount).sub(amountToSell)
       )
     ).to.be.true;
   });
