@@ -30,6 +30,7 @@ pub struct SellAndBurn<'info> {
     // /// CHECK: Safe because we don't read or write from the account
     // pub program_signer: AccountInfo<'info>,
     pub player: Signer<'info>,
+    #[account(mut)]
     pub mint: Account<'info, Mint>,
     #[account(mut)]
     pub player_token: Account<'info, TokenAccount>,
