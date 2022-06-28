@@ -6,7 +6,7 @@ pub const DISCRIMINATOR: usize = 8;
 //Consts for reward calculation
 pub const NFT_PRICE: u64 = 150000000000; //nft not implemented yet, const now
 pub const EULER_NUMBER: f64 = 2.718_281_828; //const e
-pub const MAX_SIZE_REWARD: usize = FLOAT_MAX*4 + DISCRIMINATOR; //Reward account four f64 field + discriminator
+pub const MAX_SIZE_REWARD: usize = FLOAT_MAX*5 + DISCRIMINATOR; //Reward account four u64 fields and one i64 + discriminator
 pub const VICTORY: u64 = 16800000000; //calculate the rewards based on the nft price, values not final
 pub const TOP_FIVE: u64 = 67200000000;
 pub const TOP_TEN: u64= 168000000000;
@@ -20,5 +20,3 @@ pub const SEC_IN_DAY: i64 = 86400; //seconds in day to calculate current day fro
 
 //Player account
 pub const MAX_PLAYER_SIZE: usize = PUBKEY_MAX + (1+FLOAT_MAX) + DISCRIMINATOR; //pubkey + rating wrapped in some + discriminator for Player account
-//DaysPassed account
-pub const MAX_DAYS_SIZE: usize = FLOAT_MAX + DISCRIMINATOR; //days(u64) + discriminator

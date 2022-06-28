@@ -220,7 +220,7 @@ describe('Membrane', () => {
     ).to.be.equal(playerAccountAfter.rating.toNumber());
   });
 
-  it('User can sell the token', async () => {
+  it.skip('User can sell the token', async () => {
     const amount = new anchor.BN(0);
 
     const storageTokenBalanceBefore =
