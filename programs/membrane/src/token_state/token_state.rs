@@ -21,7 +21,7 @@ pub struct MintInitialize<'info> {
     pub token_program: Program<'info, Token>,
     #[account(mut)]
     /// CHECK: Safe because we don't read or write from the account
-    pub authority: AccountInfo<'info>,
+    pub authority: Signer<'info>,
     pub rent: Sysvar<'info, Rent>,
 }
 
