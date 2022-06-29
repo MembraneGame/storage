@@ -51,8 +51,6 @@ describe('Membrane', () => {
 
     mintAddress = mintResult.mintAddress;
     storageTokenAddress = mintResult.associatedTokenAddress;
-    // Generate reward
-    reward = Keypair.generate();
   });
 
   it('Can initialize mint', async () => {
@@ -92,7 +90,43 @@ describe('Membrane', () => {
     );
   });
 
+  it('Can mint a token', async () => {
+    const amountToMint = new anchor.BN(
+      adjustSupply(1000, PLASMA_DECIMALS)
+    );
+
+    const storageTokenBalanceBefore =
+      await anchorProvider.connection.getTokenAccountBalance(
+        storageTokenAddress
+      );
+
+    await program.methods
+      .mintToken(amountToMint)
+      .accounts({
+        mint: mintAddress,
+        tokenAccount: storageTokenAddress,
+        authority: storage.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID
+      })
+      .signers([storage])
+      .rpc();
+
+    const storageTokenBalanceAfter =
+      await anchorProvider.connection.getTokenAccountBalance(
+        storageTokenAddress
+      );
+
+    expect(
+      new anchor.BN(storageTokenBalanceBefore.value.amount)
+        .add(amountToMint)
+        .eq(new anchor.BN(storageTokenBalanceAfter.value.amount))
+    ).to.be.true;
+  });
+
   it('Can initialize a reward', async () => {
+    // Generate reward account
+    reward = Keypair.generate();
+
     await program.methods
       .initializeReward()
       .accounts({
@@ -124,6 +158,7 @@ describe('Membrane', () => {
   });
 
   it('Can initialize a player', async () => {
+    // Generate player account
     player = Keypair.generate();
     const user = anchorProvider.wallet;
 
