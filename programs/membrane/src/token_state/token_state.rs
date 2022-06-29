@@ -40,6 +40,7 @@ pub struct SellAndBurn<'info> {
     pub authority: Signer<'info>,
 }
 
+
 // #[derive(Accounts)]
 // pub struct BurnToken<'info> {
 //     pub mint: Account<'info, Mint>,
