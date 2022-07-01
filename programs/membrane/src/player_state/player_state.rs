@@ -4,6 +4,7 @@ pub use crate::constants;
 pub fn create_player(ctx: Context<InitializePlayer>, rating: Option<i64>) -> Result<()> {
     let player = &mut ctx.accounts.player;
     let user = &ctx.accounts.user;
+    player.claimable = 0;
 
     player.user = *user.key;
     match rating {
@@ -29,4 +30,5 @@ pub struct InitializePlayer<'info> {
 pub struct Player {
     pub user: Pubkey,
     pub rating: Option<i64>,
+    pub claimable: u64,
 }
