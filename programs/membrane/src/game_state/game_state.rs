@@ -176,12 +176,12 @@ pub struct Payout<'info> {
         #[account(mut)]
         player: Account<'info, player_state::Player>,
         pub sender: Signer<'info>,
-        #[account(mut)]
-        pub vault_token: Account<'info, TokenAccount>,
-        #[account(mut)]
-        pub player_token: Account<'info, TokenAccount>,
-        pub mint: Account<'info, Mint>,
-        pub token_program: Program<'info, Token>,
+        // #[account(mut)]
+        // pub vault_token: Account<'info, TokenAccount>,
+        // #[account(mut)]
+        // pub player_token: Account<'info, TokenAccount>,
+        // pub mint: Account<'info, Mint>,
+        // pub token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
