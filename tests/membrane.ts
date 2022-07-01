@@ -7,12 +7,13 @@ import {
   getOrCreateAssociatedTokenAccount,
   TOKEN_PROGRAM_ID
 } from '@solana/spl-token';
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { Membrane } from '../target/types/membrane';
 import {
   adjustSupply,
   findAssociatedTokenAddress,
-  getAirdrop, sendToken
+  getAirdrop,
+  sendToken
 } from './utils/web3';
 import { expect } from 'chai';
 import {
@@ -21,7 +22,11 @@ import {
   generateRandomGameResult,
   initializeMint
 } from './utils/mocks';
-import { PLASMA_DECIMALS, PLASMA_INITIAL_SUPPLY } from './utils/constants';
+import {
+  MAX_PLAYER_SIZE, MAX_SIZE_REWARD,
+  PLASMA_DECIMALS,
+  PLASMA_INITIAL_SUPPLY
+} from './utils/constants';
 
 describe('Membrane', () => {
   // Configure the client to use the local cluster.
@@ -51,6 +56,22 @@ describe('Membrane', () => {
 
     mintAddress = mintResult.mintAddress;
     storageTokenAddress = mintResult.associatedTokenAddress;
+
+    // Estimate rent exemption for accounts (in SOL)
+    const playerAccountMaxRent =
+      await anchorProvider.connection.getMinimumBalanceForRentExemption(
+        MAX_PLAYER_SIZE
+      );
+    const rewardAccountMaxRent =
+      await anchorProvider.connection.getMinimumBalanceForRentExemption(
+        MAX_SIZE_REWARD
+      );
+    console.log({
+      MAX_PLAYER_SIZE,
+      MAX_SIZE_REWARD,
+      playerAccountMaxRent: playerAccountMaxRent / LAMPORTS_PER_SOL,
+      rewardAccountMaxRent: rewardAccountMaxRent / LAMPORTS_PER_SOL
+    });
   });
 
   it('Can initialize mint', async () => {
@@ -91,9 +112,7 @@ describe('Membrane', () => {
   });
 
   it('Can mint a token', async () => {
-    const amountToMint = new anchor.BN(
-      adjustSupply(1000, PLASMA_DECIMALS)
-    );
+    const amountToMint = new anchor.BN(adjustSupply(1000, PLASMA_DECIMALS));
 
     const storageTokenBalanceBefore =
       await anchorProvider.connection.getTokenAccountBalance(
@@ -161,9 +180,10 @@ describe('Membrane', () => {
     // Generate player account
     player = Keypair.generate();
     const user = anchorProvider.wallet;
+    const rating = new anchor.BN(0);
 
     await program.methods
-      .initializePlayer()
+      .initializePlayer(rating)
       .accounts({
         player: player.publicKey,
         user: user.publicKey,
@@ -175,7 +195,7 @@ describe('Membrane', () => {
     const playerAccount = await program.account.player.fetch(player.publicKey);
 
     expect(playerAccount.user.toBase58()).to.equal(user.publicKey.toBase58());
-    expect(playerAccount.rating.toNumber()).to.equal(0);
+    expect(playerAccount.rating.toNumber()).to.equal(rating.toNumber());
   });
 
   it('Can make a single payout', async () => {
@@ -256,9 +276,7 @@ describe('Membrane', () => {
   });
 
   it('User can sell the token', async () => {
-    const amountToSell = new anchor.BN(
-      adjustSupply(10, PLASMA_DECIMALS)
-    );
+    const amountToSell = new anchor.BN(adjustSupply(10, PLASMA_DECIMALS));
 
     // Send some tokens to the player
     await sendToken(

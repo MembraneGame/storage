@@ -27,3 +27,6 @@ export const KILL: number = 120_000_000_000;
 // UNIX values
 export const START: number = 1654797600;
 export const SEC_IN_DAY: number = 86400;
+
+//Player account
+export const MAX_PLAYER_SIZE: number = DISCRIMINATOR + PUBKEY_MAX + (1 + FLOAT_MAX); // discriminator + pubkey + rating wrapped in some
