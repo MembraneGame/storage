@@ -148,9 +148,9 @@ export type PlayerPayoutResult = {
 };
 
 export const RATING_LEVEL_MULTIPLIERS: LevelRangeValueTuple<RatingLevel>[] = [
-  [[0, 100], new Decimal(0.8)],
-  [[101, 200], new Decimal(0.9)],
-  [[201, Infinity], new Decimal(1)]
+  [[0, 100], new Decimal(8)],
+  [[101, 200], new Decimal(9)],
+  [[201, Infinity], new Decimal(10)]
 ];
 export const RATING_CHANGE: LevelRangeValueTuple<PlacementLevel>[] = [
   [[1], new Decimal(10)],
@@ -184,6 +184,7 @@ export const calculatePlayerPayout = (
 
   const reward = ratingMultiplier
     .mul(placementReward.add(killReward))
+    .div(10)
     .toDecimalPlaces(0, Decimal.ROUND_DOWN);
 
   return {

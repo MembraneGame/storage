@@ -204,43 +204,17 @@ describe('Membrane', () => {
     const playerAccountBefore = await program.account.player.fetch(
       player.publicKey
     );
-    const storageTokenBalanceBefore =
-      await anchorProvider.connection.getTokenAccountBalance(
-        storageTokenAddress
-      );
-    const playerTokenAccount = await getOrCreateAssociatedTokenAccount(
-      anchorProvider.connection,
-      storage,
-      mintAddress,
-      player.publicKey
-    );
-    const playerTokenBalanceBefore =
-      await anchorProvider.connection.getTokenAccountBalance(
-        playerTokenAccount.address
-      );
 
     await program.methods
       .payout(placement, kills)
       .accounts({
         reward: reward.publicKey,
         player: player.publicKey,
-        sender: storage.publicKey,
-        vaultToken: storageTokenAddress,
-        playerToken: playerTokenAccount.address,
-        mint: mintAddress,
-        tokenProgram: TOKEN_PROGRAM_ID
+        sender: storage.publicKey
       })
       .signers([storage])
       .rpc();
 
-    const storageTokenBalanceAfter =
-      await anchorProvider.connection.getTokenAccountBalance(
-        storageTokenAddress
-      );
-    const playerTokenBalanceAfter =
-      await anchorProvider.connection.getTokenAccountBalance(
-        playerTokenAccount.address
-      );
     const playerAccountAfter = await program.account.player.fetch(
       player.publicKey
     );
@@ -253,17 +227,6 @@ describe('Membrane', () => {
       rewardMock
     );
 
-    expect(
-      new anchor.BN(storageTokenBalanceAfter.value.amount).eq(
-        new anchor.BN(storageTokenBalanceBefore.value.amount).sub(rewardAmount)
-      )
-    ).to.be.true;
-    expect(
-      new anchor.BN(playerTokenBalanceAfter.value.amount).eq(
-        new anchor.BN(playerTokenBalanceBefore.value.amount).add(rewardAmount)
-      )
-    ).to.be.true;
-
     const safeRatingChange = playerAccountBefore.rating
       .add(ratingChange)
       .lt(new anchor.BN(0))
@@ -271,9 +234,92 @@ describe('Membrane', () => {
       : ratingChange;
 
     expect(
+      playerAccountBefore.claimable.add(rewardAmount).eq(playerAccountAfter.claimable)
+    ).to.be.true;
+    expect(
       playerAccountBefore.rating.add(safeRatingChange).toNumber()
     ).to.be.equal(playerAccountAfter.rating.toNumber());
   });
+
+  it('User can claim a reward', async () => {
+    const user = anchorProvider.wallet;
+
+    const playerAccountBefore = await program.account.player.fetch(
+      player.publicKey
+    );
+    const storageTokenBalanceBefore =
+      await anchorProvider.connection.getTokenAccountBalance(
+        storageTokenAddress
+      );
+    const userTokenAccount = await getOrCreateAssociatedTokenAccount(
+      anchorProvider.connection,
+      storage,
+      mintAddress,
+      user.publicKey
+    );
+    const userTokenBalanceBefore =
+      await anchorProvider.connection.getTokenAccountBalance(
+        userTokenAccount.address
+      );
+
+    console.log({
+      playerAccountBefore,
+      storageTokenBalanceBefore,
+      userTokenAccount,
+      userTokenBalanceBefore
+    });
+
+    await program.methods
+      .userClaim()
+      .accounts({
+        player: player.publicKey,
+        user: user.publicKey,
+        authority: user.publicKey,
+        vaultToken: storageTokenAddress,
+        playerToken: userTokenAccount.address,
+        mint: mintAddress,
+        tokenProgram: TOKEN_PROGRAM_ID
+      })
+      .signers([])
+      .rpc();
+
+    const storageTokenBalanceAfter =
+      await anchorProvider.connection.getTokenAccountBalance(
+        storageTokenAddress
+      );
+    const userTokenAccountAfter = await getOrCreateAssociatedTokenAccount(
+      anchorProvider.connection,
+      storage,
+      mintAddress,
+      user.publicKey
+    );
+    const userTokenBalanceAfter =
+      await anchorProvider.connection.getTokenAccountBalance(
+        userTokenAccount.address
+      );
+    const playerAccountAfter = await program.account.player.fetch(
+      player.publicKey
+    );
+
+    console.log({
+      storageTokenBalanceAfter,
+      userTokenBalanceAfter,
+      userTokenAccountAfter,
+      playerAccountAfter
+    });
+
+    expect(
+      new anchor.BN(storageTokenBalanceAfter.value.amount).eq(
+        new anchor.BN(storageTokenBalanceBefore.value.amount).sub(playerAccountBefore.claimable)
+      )
+    ).to.be.true;
+    expect(
+      new anchor.BN(userTokenBalanceAfter.value.amount).eq(
+        new anchor.BN(userTokenBalanceBefore.value.amount).add(playerAccountBefore.claimable)
+      )
+    ).to.be.true;
+  });
+
 
   it('User can sell the token', async () => {
     const amountToSell = new anchor.BN(adjustSupply(10, PLASMA_DECIMALS));
