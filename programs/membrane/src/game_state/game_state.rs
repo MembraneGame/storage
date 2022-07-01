@@ -119,7 +119,7 @@ pub fn user_claim(ctx: Context<PlayerClaim>) -> Result<()> {
 
     //Define token program
     let cpi_program = ctx.accounts.token_program.to_account_info();
-    //Define CpiContext<Transfer>
+    //Define CpiContext<Approve>
     let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
     token::approve(cpi_ctx, player.claimable)?;
 
