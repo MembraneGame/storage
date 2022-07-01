@@ -26,8 +26,8 @@ pub mod membrane {
         token_state::initialize_mint(ctx)
     }
 
-    pub fn initialize_player(ctx: Context<InitializePlayer>) -> Result<()> { //authority is user
-        player_state::create_player(ctx)
+    pub fn initialize_player(ctx: Context<InitializePlayer>, rating: Option<i64>) -> Result<()> { //authority is user
+        player_state::create_player(ctx, rating)
     }
 
     pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
