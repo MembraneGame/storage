@@ -175,7 +175,7 @@ pub struct Payout<'info> {
         pub reward: Account<'info, maths::Reward>,
         #[account(mut)]
         player: Account<'info, player_state::Player>,
-        pub sender: Signer<'info>,
+        // pub sender: Signer<'info>,
         // #[account(mut)]
         // pub vault_token: Account<'info, TokenAccount>,
         // #[account(mut)]
