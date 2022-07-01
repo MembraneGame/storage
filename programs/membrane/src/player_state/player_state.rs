@@ -1,12 +1,16 @@
 use anchor_lang::prelude::*;
 pub use crate::constants;
 
-pub fn create_player(ctx: Context<InitializePlayer>) -> Result<()> {
+pub fn create_player(ctx: Context<InitializePlayer>, rating: Option<i64>) -> Result<()> {
     let player = &mut ctx.accounts.player;
     let user = &ctx.accounts.user;
 
     player.user = *user.key;
-    player.rating = Some(0);
+    match rating {
+        Some(x) => player.rating = Some(x),
+        None => player.rating = Some(0),
+    };
+    
     
     Ok(())
 }
