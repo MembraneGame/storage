@@ -119,7 +119,7 @@ pub fn user_claim(ctx: Context<PlayerClaim>) -> Result<()> {
 
     //Define token program
     let cpi_program = ctx.accounts.token_program.to_account_info();
-    //Define CpiContext<Transfer>
+    //Define CpiContext<Approve>
     let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
     token::approve(cpi_ctx, player.claimable)?;
 
@@ -176,12 +176,12 @@ pub struct Payout<'info> {
         #[account(mut)]
         player: Account<'info, player_state::Player>,
         pub sender: Signer<'info>,
-        #[account(mut)]
-        pub vault_token: Account<'info, TokenAccount>,
-        #[account(mut)]
-        pub player_token: Account<'info, TokenAccount>,
-        pub mint: Account<'info, Mint>,
-        pub token_program: Program<'info, Token>,
+        // #[account(mut)]
+        // pub vault_token: Account<'info, TokenAccount>,
+        // #[account(mut)]
+        // pub player_token: Account<'info, TokenAccount>,
+        // pub mint: Account<'info, Mint>,
+        // pub token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
