@@ -42,6 +42,10 @@ pub mod membrane {
         game_state::payout(ctx, placement, kills)
     }
 
+    pub fn user_approve(ctx: Context<PlayerApprove>) -> Result<()> {
+        game_state::user_approve(ctx)
+    }
+
     pub fn user_claim(ctx: Context<PlayerClaim>) -> Result<()> {
         game_state::user_claim(ctx)
     }
