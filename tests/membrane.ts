@@ -209,10 +209,9 @@ describe('Membrane', () => {
       .payout(placement, kills)
       .accounts({
         reward: reward.publicKey,
-        player: player.publicKey,
-        sender: storage.publicKey
+        player: player.publicKey
       })
-      .signers([storage])
+      .signers([])
       .rpc();
 
     const playerAccountAfter = await program.account.player.fetch(
@@ -247,6 +246,9 @@ describe('Membrane', () => {
     const playerAccountBefore = await program.account.player.fetch(
       player.publicKey
     );
+
+    console.log('Available to claim', playerAccountBefore.claimable.toString());
+
     const storageTokenBalanceBefore =
       await anchorProvider.connection.getTokenAccountBalance(
         storageTokenAddress
@@ -269,19 +271,62 @@ describe('Membrane', () => {
       userTokenBalanceBefore
     });
 
-    await program.methods
-      .userClaim()
-      .accounts({
-        player: player.publicKey,
-        user: user.publicKey,
-        authority: user.publicKey,
-        vaultToken: storageTokenAddress,
-        playerToken: userTokenAccount.address,
-        mint: mintAddress,
-        tokenProgram: TOKEN_PROGRAM_ID
-      })
-      .signers([])
-      .rpc();
+    try {
+      await program.methods
+        .userApprove()
+        .accounts({
+          player: player.publicKey,
+          user: user.publicKey,
+          authority: storage.publicKey,
+          vaultToken: storageTokenAddress,
+          playerToken: userTokenAccount.address,
+          mint: mintAddress,
+          tokenProgram: TOKEN_PROGRAM_ID
+        })
+        .signers([storage])
+        .rpc();
+    } catch (e) {
+      console.log('userApprove - ERROR');
+      throw e;
+    }
+
+    const userTokenAccountDelegated = await getOrCreateAssociatedTokenAccount(
+      anchorProvider.connection,
+      storage,
+      mintAddress,
+      user.publicKey
+    );
+
+    const storageTokenAccountDelegated = await getOrCreateAssociatedTokenAccount(
+      anchorProvider.connection,
+      storage,
+      mintAddress,
+      storage.publicKey
+    );
+
+    console.log({
+      userTokenAccountDelegated,
+      storageTokenAccountDelegated
+    });
+
+    try {
+      await program.methods
+        .userClaim()
+        .accounts({
+          player: player.publicKey,
+          user: user.publicKey,
+          authority: user.publicKey,
+          vaultToken: storageTokenAddress,
+          playerToken: userTokenAccount.address,
+          mint: mintAddress,
+          tokenProgram: TOKEN_PROGRAM_ID
+        })
+        .signers([]) // anchor will set user as a signer by default
+        .rpc();
+    } catch (e) {
+      console.log('userClaim - ERROR');
+      throw e;
+    }
 
     const storageTokenBalanceAfter =
       await anchorProvider.connection.getTokenAccountBalance(
