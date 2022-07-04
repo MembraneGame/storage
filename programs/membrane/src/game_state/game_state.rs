@@ -96,7 +96,7 @@ pub fn payout(ctx: Context<Payout>, placement: u64, kills: u64) -> Result<()> {
     Ok(())
 }
 
-pub fn user_claim(ctx: Context<PlayerClaim>) -> Result<()> {
+pub fn user_approve(ctx: Context<PlayerApprove>) -> Result<()> {
     let player = &mut ctx.accounts.player;
 
     //Define Approve account
@@ -116,37 +116,11 @@ pub fn user_claim(ctx: Context<PlayerClaim>) -> Result<()> {
         .authority
         .to_account_info(), 
     };
-
     //Define token program
     let cpi_program = ctx.accounts.token_program.to_account_info();
     //Define CpiContext<Approve>
     let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
     token::approve(cpi_ctx, player.claimable)?;
-
-    //Define Transfer account
-    let cpi_accounts = Transfer {
-        from: ctx
-        .accounts
-        .vault_token
-        .to_account_info(), 
-
-        to: ctx
-        .accounts
-        .player_token
-        .to_account_info(), 
-
-        authority: ctx
-        .accounts
-        .user
-        .to_account_info(), 
-    };
-    //Define token program
-    let cpi_program = ctx.accounts.token_program.to_account_info();
-    //Define CpiContext<Transfer>
-    let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
-    token::transfer(cpi_ctx, player.claimable)?;
-
-    player.claimable = 0;
 
     //not sure if revoke is necessary, since solana can automatically change the delegated_amount
     // //Define Revoke account
@@ -169,19 +143,66 @@ pub fn user_claim(ctx: Context<PlayerClaim>) -> Result<()> {
 }
 
 
+pub fn user_claim(ctx: Context<PlayerClaim>) -> Result<()> {
+    
+    let player = &mut ctx.accounts.player;
+
+    //Define Transfer account
+    let cpi_accounts = Transfer {
+        from: ctx
+        .accounts
+        .vault_token
+        .to_account_info(), 
+
+        to: ctx
+        .accounts
+        .player_token
+        .to_account_info(), 
+
+        authority: ctx
+        .accounts
+        .user
+        .to_account_info(), 
+    };
+
+    //Define token program
+    let cpi_program = ctx.accounts.token_program.to_account_info();
+    //Define CpiContext<Transfer>
+    let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
+    token::transfer(cpi_ctx, player.claimable)?;
+
+    player.claimable = 0;
+    Ok(())
+}
+
 #[derive(Accounts)]
 pub struct Payout<'info> {
         #[account(mut)]
         pub reward: Account<'info, maths::Reward>,
         #[account(mut)]
         player: Account<'info, player_state::Player>,
-        pub sender: Signer<'info>,
+        // pub sender: Signer<'info>,
         // #[account(mut)]
         // pub vault_token: Account<'info, TokenAccount>,
         // #[account(mut)]
         // pub player_token: Account<'info, TokenAccount>,
         // pub mint: Account<'info, Mint>,
         // pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+pub struct PlayerApprove<'info> {
+        #[account(mut)]
+        pub player: Account<'info, player_state::Player>,
+        ///CHECK: Safe because we do not read or write from the account
+        pub user: UncheckedAccount<'info>,
+        pub authority: Signer<'info>, //authority is storage
+        #[account(mut)]
+        pub vault_token: Account<'info, TokenAccount>,
+        #[account(mut)]
+        pub player_token: Account<'info, TokenAccount>,
+        pub mint: Account<'info, Mint>,
+        pub token_program: Program<'info, Token>,
 }
 
 #[derive(Accounts)]
