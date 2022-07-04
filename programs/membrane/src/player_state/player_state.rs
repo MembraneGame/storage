@@ -7,7 +7,7 @@ pub fn create_player(ctx: Context<InitializePlayer>, rating: Option<i64>) -> Res
     player.claimable = 0;
     player.nft_counter = 1; //account is created when user buys their first nft
     player.user = *user.key;
-    player.bump = *ctx.bumps.get("player_account").unwrap();
+    player.bump = *ctx.bumps.get("player").unwrap();
     match rating {
         Some(x) => player.rating = Some(x),
         None => player.rating = Some(0),
