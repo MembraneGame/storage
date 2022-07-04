@@ -108,7 +108,7 @@ pub fn user_approve(ctx: Context<PlayerApprove>) -> Result<()> {
 
         to: ctx
         .accounts
-        .player_token
+        .vault_token
         .to_account_info(), 
 
         authority: ctx
