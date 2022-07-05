@@ -42,15 +42,15 @@ pub mod membrane {
         token_state::user_sell(ctx, amount)
     }
 
-    pub fn payout(ctx: Context<Payout>, placement: u64, kills: u64) -> Result<()> {
-        game_state::payout(ctx, placement, kills)
+    pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u64) -> Result<()> {
+        game_state::calculate_reward(ctx, placement, kills)
     }
 
-    pub fn user_approve(ctx: Context<PlayerApprove>) -> Result<()> {
+    pub fn user_approve(ctx: Context<UserApprove>) -> Result<()> {
         game_state::user_approve(ctx)
     }
 
-    pub fn user_claim(ctx: Context<PlayerClaim>) -> Result<()> {
+    pub fn user_claim(ctx: Context<UserClaim>) -> Result<()> {
         game_state::user_claim(ctx)
     }
 

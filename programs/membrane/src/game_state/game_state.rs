@@ -12,8 +12,8 @@ pub fn initialize_reward(ctx: Context<maths::InitializeReward>) -> Result<()> {
     Ok(())
 }
 
-//Fn to pay player
-pub fn payout(ctx: Context<Payout>, placement: u64, kills: u64) -> Result<()> {
+//Fn to calculate reward at the end of the game and update player account
+pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u64) -> Result<()> {
     let player = &mut ctx.accounts.player;
     let rating_multiplier:u64 = match player.rating { //match rating_multiplier
         Some(0..=100) => 8, //values not final
@@ -96,7 +96,8 @@ pub fn payout(ctx: Context<Payout>, placement: u64, kills: u64) -> Result<()> {
     Ok(())
 }
 
-pub fn user_approve(ctx: Context<PlayerApprove>) -> Result<()> {
+//Fn to delegate claimable token to the user
+pub fn user_approve(ctx: Context<UserApprove>) -> Result<()> {
     let player = &mut ctx.accounts.player;
 
     //Define Approve account
@@ -142,8 +143,8 @@ pub fn user_approve(ctx: Context<PlayerApprove>) -> Result<()> {
     Ok(())
 }
 
-
-pub fn user_claim(ctx: Context<PlayerClaim>) -> Result<()> {
+//Fn for the user to claim their delegated tokens
+pub fn user_claim(ctx: Context<UserClaim>) -> Result<()> {
     
     let player = &mut ctx.accounts.player;
 
@@ -176,7 +177,7 @@ pub fn user_claim(ctx: Context<PlayerClaim>) -> Result<()> {
 }
 
 #[derive(Accounts)]
-pub struct Payout<'info> {
+pub struct CalculateReward<'info> {
         #[account(mut)]
         pub reward: Account<'info, maths::Reward>,
         #[account(mut)]
@@ -191,7 +192,7 @@ pub struct Payout<'info> {
 }
 
 #[derive(Accounts)]
-pub struct PlayerApprove<'info> {
+pub struct UserApprove<'info> {
         #[account(mut)]
         pub player: Account<'info, player_state::Player>,
         ///CHECK: Safe because we do not read or write from the account
@@ -206,7 +207,7 @@ pub struct PlayerApprove<'info> {
 }
 
 #[derive(Accounts)]
-pub struct PlayerClaim<'info> {
+pub struct UserClaim<'info> {
         #[account(mut)]
         pub player: Account<'info, player_state::Player>,
         pub user: Signer<'info>,
