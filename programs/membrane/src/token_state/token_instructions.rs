@@ -41,6 +41,10 @@ pub fn transfer_authority(ctx: Context<TransferAuthority>) -> Result<()> {
 
 //Fn to mint tokens to ATA
 pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
+
+    let (_vault_authority, vault_authority_bump) = Pubkey::find_program_address(&[VAULT_PDA_SEED], ctx.program_id);
+    let authority_seeds = &[&VAULT_PDA_SEED[..], &[vault_authority_bump]];
+
     let cpi_accounts = MintTo {
         mint: ctx.accounts.mint.to_account_info(),
         to: ctx.accounts.token_account.to_account_info(),
@@ -52,12 +56,17 @@ pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
     .to_account_info();
 
     let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-    token::mint_to(cpi_ctx, amount)?;
+
+    token::mint_to(cpi_ctx.with_signer(&[&authority_seeds[..]]), amount)?;
     Ok(())
 }
 
 //Fn when user sells tokens back to the storage
 pub fn user_sell(ctx: Context<SellAndBurn>, amount: u64) -> Result<()> { //signer is user, authority is the storage, amount in 10^9
+
+    let (_vault_authority, vault_authority_bump) = Pubkey::find_program_address(&[VAULT_PDA_SEED], ctx.program_id);
+    let authority_seeds = &[&VAULT_PDA_SEED[..], &[vault_authority_bump]];
+
     //Define Transfer account
     let cpi_accounts = Transfer {
         from: ctx
@@ -84,7 +93,7 @@ pub fn user_sell(ctx: Context<SellAndBurn>, amount: u64) -> Result<()> { //signe
 
     //Define CpiContext<Tranfer>
     let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
-    token::transfer(cpi_ctx, amount)?;
+    token::transfer(cpi_ctx.with_signer(&[&authority_seeds[..]]), amount)?;
 
     //Define Burn account
     let cpi_burn_accounts = Burn {
@@ -112,7 +121,7 @@ pub fn user_sell(ctx: Context<SellAndBurn>, amount: u64) -> Result<()> { //signe
 
     //Define CpiContext<Burn>
     let cpi_burn_ctx = CpiContext::new(cpi_burn_program, cpi_burn_accounts);
-    token::burn(cpi_burn_ctx, amount/2)?;
+    token::burn(cpi_burn_ctx.with_signer(&[&authority_seeds[..]]), amount/2)?;
 
     Ok(())
 }
