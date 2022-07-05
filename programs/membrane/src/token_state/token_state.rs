@@ -40,6 +40,7 @@ pub struct SellAndBurn<'info> {
 
 #[derive(Accounts)]
 pub struct TransferAuthority<'info> {
+    #[account(mut)]
     pub storage: Signer<'info>,
     pub mint: Account<'info, Mint>,
     pub token_program: Program<'info, Token>,
