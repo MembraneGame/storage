@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, Mint, TokenAccount, Transfer, Approve, Revoke};
+use anchor_spl::token::{self, Token, Mint, TokenAccount, Transfer, Approve};
 use crate::player_state;
 use crate::errors;
 use crate::maths;
