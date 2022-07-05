@@ -16,7 +16,7 @@ pub fn create_player(ctx: Context<InitializePlayer>, rating: Option<i64>) -> Res
     Ok(())
 }
 
-pub fn update_player(ctx: Context<UpdatePlayer>) -> Result<()> {
+pub fn update_player(ctx: Context<UpdatePlayer>, _bump: u8) -> Result<()> {
     let player = &mut ctx.accounts.player;
     player.nft_counter = player.nft_counter + 1; //updated when user buys another nft
     Ok(())
@@ -25,7 +25,7 @@ pub fn update_player(ctx: Context<UpdatePlayer>) -> Result<()> {
 #[derive(Accounts)]
 pub struct InitializePlayer<'info> {
     #[account(init, payer = user, space = constants::MAX_PLAYER_SIZE, seeds = [b"player".as_ref(), user.key().as_ref()], bump)]
-    pub player: Account<'info, Player>,
+    pub player: Box<Account<'info, Player>>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -36,7 +36,7 @@ pub struct InitializePlayer<'info> {
 #[instruction(bump: u8)]
 pub struct UpdatePlayer<'info> {
     #[account(mut, has_one = identity, seeds = [b"player".as_ref(), identity.key().as_ref()], bump = bump)]
-    pub player: Account<'info, Player>,
+    pub player: Box<Account<'info, Player>>,
     #[account(mut)]
     pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,

@@ -30,8 +30,8 @@ pub mod membrane {
         player_state::create_player(ctx, rating)
     }
 
-    pub fn update_player(ctx: Context<UpdatePlayer>) -> Result<()> {
-        player_state::update_player(ctx)
+    pub fn update_player(ctx: Context<UpdatePlayer>, bump: u8) -> Result<()> {
+        player_state::update_player(ctx, bump)
     }
 
     pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
