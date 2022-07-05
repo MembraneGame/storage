@@ -38,6 +38,13 @@ pub struct SellAndBurn<'info> {
     pub authority: Signer<'info>,
 }
 
+#[derive(Accounts)]
+pub struct TransferAuthority<'info> {
+    pub storage: Signer<'info>,
+    pub mint: Account<'info, Mint>,
+    pub token_program: Program<'info, Token>,
+}
+
 
 // #[derive(Accounts)]
 // pub struct BurnToken<'info> {

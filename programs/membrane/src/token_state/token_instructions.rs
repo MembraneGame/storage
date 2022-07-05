@@ -1,6 +1,9 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, MintTo, Burn, Transfer, InitializeMint};
+use anchor_spl::token::{self, MintTo, Burn, Transfer, InitializeMint, SetAuthority};
 use crate::token_state::{MintToken, MintInitialize, SellAndBurn};
+use crate::constants::*;
+use super::TransferAuthority;
+pub use spl_token;
 
 //Fn to initialize mint
 pub fn initialize_mint(ctx:Context<MintInitialize>) -> Result<()> {
@@ -11,6 +14,20 @@ pub fn initialize_mint(ctx:Context<MintInitialize>) -> Result<()> {
     let cpi_program = ctx.accounts.token_program.to_account_info();
     let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
     token::initialize_mint(cpi_ctx, 9, ctx.accounts.authority.key, Some(ctx.accounts.authority.key))?;
+    Ok(())
+}
+
+pub fn transfer_authority(ctx: Context<TransferAuthority>) -> Result<()> {
+    let cpi_accounts = SetAuthority {
+        current_authority: ctx.accounts.storage.to_account_info(),
+        account_or_mint: ctx.accounts.mint.to_account_info(),
+    };
+    let cpi_program = ctx.accounts.token_program.to_account_info();
+    let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
+    let (pda_authority, _bump) = Pubkey::find_program_address(&[VAULT_PDA_SEED], ctx.program_id);    
+    token::set_authority(cpi_ctx, spl_token::instruction::AuthorityType::MintTokens, Some(pda_authority))?;
+    
     Ok(())
 }
 
