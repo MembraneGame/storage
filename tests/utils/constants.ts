@@ -28,5 +28,8 @@ export const KILL: number = 120_000_000_000;
 export const START: number = 1654797600;
 export const SEC_IN_DAY: number = 86400;
 
-//Player account
+// Player account
 export const MAX_PLAYER_SIZE: number = DISCRIMINATOR + PUBKEY_MAX + (1 + FLOAT_MAX) + FLOAT_MAX; // discriminator + pubkey + rating wrapped in some
+
+// PDA SEEDS
+export const VAULT_PDA_SEED: string = 'vault';

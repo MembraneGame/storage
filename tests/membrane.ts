@@ -26,7 +26,7 @@ import {
   MAX_PLAYER_SIZE,
   MAX_SIZE_REWARD,
   PLASMA_DECIMALS,
-  PLASMA_INITIAL_SUPPLY
+  PLASMA_INITIAL_SUPPLY, VAULT_PDA_SEED
 } from './utils/constants';
 
 describe('Membrane', () => {
@@ -112,7 +112,60 @@ describe('Membrane', () => {
     );
   });
 
+  it('Can transfer authority to the PDA', async () => {
+    // Get storage account PDA
+    const [storageAccountPDA, storageAccountPDABump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [Buffer.from(VAULT_PDA_SEED)],
+        program.programId
+      );
+
+    const mintInfoBefore = await getMint(anchorProvider.connection, mintAddress);
+    const tokenAccountBefore = await getAccount(
+      anchorProvider.connection,
+      storageTokenAddress
+    );
+
+    expect(mintInfoBefore.mintAuthority.toBase58()).to.equal(
+      storage.publicKey.toBase58()
+    );
+    expect(tokenAccountBefore.owner.toBase58()).to.equal(
+      storage.publicKey.toBase58()
+    );
+
+    await program.methods
+      .transferAuthority()
+      .accounts({
+        storage: storage.publicKey,
+        storageTokenAccount: storageTokenAddress,
+        mint: mintAddress,
+        tokenProgram: TOKEN_PROGRAM_ID
+      })
+      .signers([storage])
+      .rpc();
+
+    const mintInfoAfter = await getMint(anchorProvider.connection, mintAddress);
+    const tokenAccountAfter = await getAccount(
+      anchorProvider.connection,
+      storageTokenAddress
+    );
+
+    expect(mintInfoAfter.mintAuthority.toBase58()).to.equal(
+      storageAccountPDA.toBase58()
+    );
+    expect(tokenAccountAfter.owner.toBase58()).to.equal(
+      storageAccountPDA.toBase58()
+    );
+  });
+
   it('Can mint a token', async () => {
+    // Get storage account PDA
+    const [storageAccountPDA, storageAccountPDABump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [Buffer.from(VAULT_PDA_SEED)],
+        program.programId
+      );
+
     const amountToMint = new anchor.BN(adjustSupply(1000, PLASMA_DECIMALS));
 
     const storageTokenBalanceBefore =
@@ -125,10 +178,10 @@ describe('Membrane', () => {
       .accounts({
         mint: mintAddress,
         tokenAccount: storageTokenAddress,
-        authority: storage.publicKey,
+        authority: storageAccountPDA,
         tokenProgram: TOKEN_PROGRAM_ID
       })
-      .signers([storage])
+      .signers([])
       .rpc();
 
     const storageTokenBalanceAfter =
@@ -215,7 +268,7 @@ describe('Membrane', () => {
     const playerAccountBefore = await program.account.player.fetch(player);
 
     await program.methods
-      .payout(placement, kills)
+      .calculateReward(placement, kills)
       .accounts({
         reward: reward.publicKey,
         player
