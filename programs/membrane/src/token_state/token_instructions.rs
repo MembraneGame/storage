@@ -1,8 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, MintTo, Burn, Transfer, InitializeMint, SetAuthority};
-use crate::token_state::{MintToken, MintInitialize, SellAndBurn};
+use super::{MintToken, MintInitialize, SellAndBurn, TransferAuthority};
 use crate::constants::*;
-use super::TransferAuthority;
 pub use spl_token;
 
 //Fn to initialize mint
