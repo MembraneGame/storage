@@ -45,6 +45,8 @@ pub struct TransferAuthority<'info> {
     #[account(mut)]
     pub mint: Account<'info, Mint>,
     pub token_program: Program<'info, Token>,
+    #[account(mut)]
+    pub storage_token_account: Account<'info, TokenAccount>,
 }
 
 
