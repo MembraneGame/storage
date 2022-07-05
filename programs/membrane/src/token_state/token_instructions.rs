@@ -1,20 +1,20 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, MintTo, Burn, Transfer, InitializeMint, SetAuthority};
-use super::{MintToken, MintInitialize, SellAndBurn, TransferAuthority};
+use anchor_spl::token::{self, MintTo, Burn, Transfer, SetAuthority};
+use super::{MintToken, SellAndBurn, TransferAuthority};
 use crate::constants::*;
 pub use spl_token;
 
 //Fn to initialize mint
-pub fn initialize_mint(ctx:Context<MintInitialize>) -> Result<()> {
-    let cpi_accounts = InitializeMint {
-        mint: ctx.accounts.mint.to_account_info(),
-        rent: ctx.accounts.rent.to_account_info(),
-    };
-    let cpi_program = ctx.accounts.token_program.to_account_info();
-    let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
-    token::initialize_mint(cpi_ctx, 9, ctx.accounts.authority.key, Some(ctx.accounts.authority.key))?;
-    Ok(())
-}
+// pub fn initialize_mint(ctx:Context<MintInitialize>) -> Result<()> {
+//     let cpi_accounts = InitializeMint {
+//         mint: ctx.accounts.mint.to_account_info(),
+//         rent: ctx.accounts.rent.to_account_info(),
+//     };
+//     let cpi_program = ctx.accounts.token_program.to_account_info();
+//     let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
+//     token::initialize_mint(cpi_ctx, 9, ctx.accounts.authority.key, Some(ctx.accounts.authority.key))?;
+//     Ok(())
+// }
 
 pub fn transfer_authority(ctx: Context<TransferAuthority>) -> Result<()> {
     let cpi_accounts = SetAuthority {

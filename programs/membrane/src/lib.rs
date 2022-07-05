@@ -22,9 +22,13 @@ pub mod membrane {
         game_state::initialize_reward(ctx)
     }
 
-    pub fn initialize_mint(ctx:Context<MintInitialize>) -> Result<()> {
-        token_state::initialize_mint(ctx)
-    }
+    // pub fn initialize_mint(ctx:Context<MintInitialize>) -> Result<()> {
+    //     token_state::initialize_mint(ctx)
+    // }
+
+    pub fn transfer_authority(ctx: Context<TransferAuthority>) -> Result<()> { //transfer authority to mint tokens to PDA
+        token_state::transfer_authority(ctx)
+    } 
 
     pub fn initialize_player(ctx: Context<InitializePlayer>, rating: Option<i64>) -> Result<()> { //authority is user
         player_state::create_player(ctx, rating)

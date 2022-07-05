@@ -13,15 +13,15 @@ pub struct MintToken<'info> {
     pub authority: Signer<'info>,
 }
 
-#[derive(Accounts)]
-pub struct MintInitialize<'info> {
-    #[account(mut)]
-    pub mint: Account<'info, Mint>,
-    pub token_program: Program<'info, Token>,
-    #[account(mut)]
-    pub authority: Signer<'info>,
-    pub rent: Sysvar<'info, Rent>,
-}
+// #[derive(Accounts)]
+// pub struct MintInitialize<'info> {
+//     #[account(mut)]
+//     pub mint: Account<'info, Mint>,
+//     pub token_program: Program<'info, Token>,
+//     #[account(mut)]
+//     pub authority: Signer<'info>,
+//     pub rent: Sysvar<'info, Rent>,
+// }
 
 #[derive(Accounts)]
 pub struct SellAndBurn<'info> {
