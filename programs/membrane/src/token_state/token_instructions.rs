@@ -38,17 +38,17 @@ pub fn user_sell(ctx: Context<SellAndBurn>, amount: u64) -> Result<()> { //signe
         from: ctx
         .accounts
         .player_token
-        .to_account_info(), 
+        .to_account_info(),
 
         to: ctx
         .accounts
         .vault_token
-        .to_account_info(), 
+        .to_account_info(),
 
         authority: ctx
         .accounts
         .player
-        .to_account_info(), 
+        .to_account_info(),
     };
 
     //Define Transfer token program
@@ -72,7 +72,7 @@ pub fn user_sell(ctx: Context<SellAndBurn>, amount: u64) -> Result<()> { //signe
         .accounts
         .vault_token
         .to_account_info(),
-        
+
         authority: ctx
         .accounts
         .authority
@@ -99,24 +99,24 @@ pub fn user_sell(ctx: Context<SellAndBurn>, amount: u64) -> Result<()> { //signe
 //             .accounts
 //             .mint
 //             .to_account_info(),
-    
+
 //             from: ctx_burn
 //             .accounts
 //             .vault_token
 //             .to_account_info(),
-            
+
 //             authority: ctx_burn
 //             .accounts
 //             .authority
 //             .to_account_info(),
 //         };
-    
+
 //         //Define burn token program
 //         let cpi_burn_program = ctx_burn
 //         .accounts
 //         .token_program
 //         .to_account_info();
-    
+
 //         //Define CpiContext<Burn>
 //         let cpi_burn_ctx = CpiContext::new(cpi_burn_program, cpi_burn_accounts);
 //         token::burn(cpi_burn_ctx, amount)?;
