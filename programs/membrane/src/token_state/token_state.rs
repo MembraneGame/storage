@@ -42,6 +42,7 @@ pub struct SellAndBurn<'info> {
 pub struct TransferAuthority<'info> {
     #[account(mut)]
     pub storage: Signer<'info>,
+    #[account(mut)]
     pub mint: Account<'info, Mint>,
     pub token_program: Program<'info, Token>,
 }
