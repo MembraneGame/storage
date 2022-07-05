@@ -3,10 +3,10 @@ pub use crate::constants;
 
 pub fn create_player(ctx: Context<InitializePlayer>, rating: Option<i64>) -> Result<()> {
     let player = &mut ctx.accounts.player;
-    let user = &ctx.accounts.user;
+
     player.claimable = 0;
     player.nft_counter = 1; //account is created when user buys their first nft
-    player.user = *user.key;
+    player.identity = ctx.accounts.identity.key();
 
     match rating {
         Some(x) => player.rating = Some(x),
@@ -29,22 +29,24 @@ pub struct InitializePlayer<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
+    pub identity: Signer<'info>,
 }
 
 #[derive(Accounts)]
 #[instruction(bump: u8)]
 pub struct UpdatePlayer<'info> {
-    #[account(mut, has_one = user, seeds = [b"player".as_ref(), user.key().as_ref()], bump = bump)]
+    #[account(mut, has_one = identity, seeds = [b"player".as_ref(), identity.key().as_ref()], bump = bump)]
     pub player: Account<'info, Player>,
     #[account(mut)]
-    pub user: Signer<'info>,
+    pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,
+    pub identity: Signer<'info>,
 }
 
 
 #[account]
 pub struct Player {
-    pub user: Pubkey,
+    pub identity: Pubkey,
     //pub bump: u8,
     pub rating: Option<i64>,
     pub claimable: u64,
