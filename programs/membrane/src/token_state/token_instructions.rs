@@ -93,7 +93,7 @@ pub fn user_sell(ctx: Context<SellAndBurn>, amount: u64) -> Result<()> { //signe
 
     //Define CpiContext<Tranfer>
     let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
-    token::transfer(cpi_ctx.with_signer(&[&authority_seeds[..]]), amount)?;
+    token::transfer(cpi_ctx, amount)?;
 
     //Define Burn account
     let cpi_burn_accounts = Burn {
