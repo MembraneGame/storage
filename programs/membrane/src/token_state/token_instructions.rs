@@ -55,9 +55,11 @@ pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
     .token_program
     .to_account_info();
 
-    let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+    let seeds = &[&authority_seeds[..]];
 
-    token::mint_to(cpi_ctx.with_signer(&[&authority_seeds[..]]), amount)?;
+    let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, seeds);
+
+    token::mint_to(cpi_ctx, amount)?;
     Ok(())
 }
 
@@ -66,6 +68,7 @@ pub fn user_sell(ctx: Context<SellAndBurn>, amount: u64) -> Result<()> { //signe
 
     let (_vault_authority, vault_authority_bump) = Pubkey::find_program_address(&[VAULT_PDA_SEED], ctx.program_id);
     let authority_seeds = &[&VAULT_PDA_SEED[..], &[vault_authority_bump]];
+    let seeds = &[&authority_seeds[..]];
 
     //Define Transfer account
     let cpi_accounts = Transfer {
@@ -120,8 +123,8 @@ pub fn user_sell(ctx: Context<SellAndBurn>, amount: u64) -> Result<()> { //signe
     .to_account_info();
 
     //Define CpiContext<Burn>
-    let cpi_burn_ctx = CpiContext::new(cpi_burn_program, cpi_burn_accounts);
-    token::burn(cpi_burn_ctx.with_signer(&[&authority_seeds[..]]), amount/2)?;
+    let cpi_burn_ctx = CpiContext::new_with_signer(cpi_burn_program, cpi_burn_accounts, seeds);
+    token::burn(cpi_burn_ctx, amount/2)?;
 
     Ok(())
 }

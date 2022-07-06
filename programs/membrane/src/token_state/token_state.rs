@@ -9,8 +9,9 @@ pub struct MintToken<'info> {
     pub token_program: Program<'info, Token>,
     #[account(mut)]
     pub token_account: Account<'info, TokenAccount>,
+    /// CHECK: SAFE PROGRAM OWNED ACCOUNT
     #[account(mut)]
-    pub authority: Signer<'info>,
+    pub authority: AccountInfo<'info>,
 }
 
 // #[derive(Accounts)]
@@ -35,7 +36,8 @@ pub struct SellAndBurn<'info> {
     #[account(mut)]
     pub vault_token: Account<'info, TokenAccount>,
     pub token_program: Program<'info, Token>,
-    pub authority: Signer<'info>,
+    /// CHECK: SAFE PROGRAM OWNED ACCOUNT
+    pub authority: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
