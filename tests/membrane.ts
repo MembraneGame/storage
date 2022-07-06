@@ -5,7 +5,7 @@ import {
   getAccount,
   getMint,
   getOrCreateAssociatedTokenAccount,
-  TOKEN_PROGRAM_ID
+  TOKEN_PROGRAM_ID, transfer
 } from '@solana/spl-token';
 import { Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { Membrane } from '../target/types/membrane';
@@ -40,10 +40,12 @@ describe('Membrane', () => {
   const tokenProgram = spl.TOKEN_PROGRAM_ID;
 
   let storage: Keypair;
+  let storagePDA: PublicKey; // storage account PDA
   let reward: Keypair;
   let mintAddress: PublicKey;
   let storageTokenAddress: PublicKey;
-  let player: PublicKey; // player account PDA
+  let player: PublicKey;
+  let playerPDA: PublicKey; // player account PDA
 
   before(async () => {
     // TODO: create first initialize script
@@ -57,6 +59,24 @@ describe('Membrane', () => {
 
     mintAddress = mintResult.mintAddress;
     storageTokenAddress = mintResult.associatedTokenAddress;
+
+    // Get storage account PDA
+    const [storageAccountPDA, storageAccountPDABump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [Buffer.from(VAULT_PDA_SEED)],
+        program.programId
+      );
+
+    storagePDA = storageAccountPDA;
+
+    // Generate player account PDA
+    const [playerAccountPDA, playerAccountPDABump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [Buffer.from('player'), anchorProvider.wallet.publicKey.toBuffer()],
+        program.programId
+      );
+
+    playerPDA = playerAccountPDA;
 
     // Estimate rent exemption for accounts (in SOL)
     const playerAccountMaxRent =
@@ -113,13 +133,6 @@ describe('Membrane', () => {
   });
 
   it('Can transfer authority to the PDA', async () => {
-    // Get storage account PDA
-    const [storageAccountPDA, storageAccountPDABump] =
-      await anchor.web3.PublicKey.findProgramAddress(
-        [Buffer.from(VAULT_PDA_SEED)],
-        program.programId
-      );
-
     const mintInfoBefore = await getMint(anchorProvider.connection, mintAddress);
     const tokenAccountBefore = await getAccount(
       anchorProvider.connection,
@@ -151,21 +164,14 @@ describe('Membrane', () => {
     );
 
     expect(mintInfoAfter.mintAuthority.toBase58()).to.equal(
-      storageAccountPDA.toBase58()
+      storagePDA.toBase58()
     );
     expect(tokenAccountAfter.owner.toBase58()).to.equal(
-      storageAccountPDA.toBase58()
+      storagePDA.toBase58()
     );
   });
 
   it('Can mint a token', async () => {
-    // Get storage account PDA
-    const [storageAccountPDA, storageAccountPDABump] =
-      await anchor.web3.PublicKey.findProgramAddress(
-        [Buffer.from(VAULT_PDA_SEED)],
-        program.programId
-      );
-
     const amountToMint = new anchor.BN(adjustSupply(1000, PLASMA_DECIMALS));
 
     const storageTokenBalanceBefore =
@@ -178,7 +184,7 @@ describe('Membrane', () => {
       .accounts({
         mint: mintAddress,
         tokenAccount: storageTokenAddress,
-        authority: storageAccountPDA,
+        authority: storagePDA,
         tokenProgram: TOKEN_PROGRAM_ID
       })
       .signers([])
@@ -234,19 +240,10 @@ describe('Membrane', () => {
     const user = anchorProvider.wallet;
     const rating = new anchor.BN(0);
 
-    // Generate player account PDA
-    const [playerAccountPDA, playerAccountPDABump] =
-      await anchor.web3.PublicKey.findProgramAddress(
-        [Buffer.from('player'), user.publicKey.toBuffer()],
-        program.programId
-      );
-
-    player = playerAccountPDA;
-
     await program.methods
       .initializePlayer(rating)
       .accounts({
-        player,
+        player: playerPDA,
         user: user.publicKey,
         identity: user.publicKey,
         systemProgram
@@ -254,7 +251,7 @@ describe('Membrane', () => {
       .signers([])
       .rpc();
 
-    const playerAccount = await program.account.player.fetch(player);
+    const playerAccount = await program.account.player.fetch(playerPDA);
 
     expect(playerAccount.identity.toBase58()).to.equal(
       user.publicKey.toBase58()
@@ -265,18 +262,18 @@ describe('Membrane', () => {
   it('Can make a single payout', async () => {
     const { placement, kills } = generateRandomGameResult();
 
-    const playerAccountBefore = await program.account.player.fetch(player);
+    const playerAccountBefore = await program.account.player.fetch(playerPDA);
 
     await program.methods
       .calculateReward(placement, kills)
       .accounts({
         reward: reward.publicKey,
-        player
+        player: playerPDA
       })
       .signers([])
       .rpc();
 
-    const playerAccountAfter = await program.account.player.fetch(player);
+    const playerAccountAfter = await program.account.player.fetch(playerPDA);
 
     const rewardMock = calculateInitialRewardParams(PLASMA_DECIMALS);
     const { rewardAmount, ratingChange } = calculatePlayerPayout(
@@ -305,7 +302,7 @@ describe('Membrane', () => {
   it.skip('User can claim a reward', async () => {
     const user = anchorProvider.wallet;
 
-    const playerAccountBefore = await program.account.player.fetch(player);
+    const playerAccountBefore = await program.account.player.fetch(playerPDA);
 
     console.log('Available to claim', playerAccountBefore.claimable.toString());
 
@@ -335,7 +332,7 @@ describe('Membrane', () => {
       await program.methods
         .userApprove()
         .accounts({
-          player,
+          player: playerPDA,
           user: user.publicKey,
           authority: storage.publicKey,
           vaultToken: storageTokenAddress,
@@ -374,7 +371,7 @@ describe('Membrane', () => {
       await program.methods
         .userClaim()
         .accounts({
-          player,
+          player: playerPDA,
           user: user.publicKey,
           authority: user.publicKey,
           vaultToken: storageTokenAddress,
@@ -403,7 +400,7 @@ describe('Membrane', () => {
       await anchorProvider.connection.getTokenAccountBalance(
         userTokenAccount.address
       );
-    const playerAccountAfter = await program.account.player.fetch(player);
+    const playerAccountAfter = await program.account.player.fetch(playerPDA);
 
     console.log({
       storageTokenBalanceAfter,
@@ -428,42 +425,52 @@ describe('Membrane', () => {
     ).to.be.true;
   });
 
-  it.skip('User can sell the token', async () => {
+  it('User can sell the token', async () => {
+    const user = anchorProvider.wallet;
     const amountToSell = new anchor.BN(adjustSupply(10, PLASMA_DECIMALS));
 
-    // Send some tokens to the player
-    await sendToken(
+    // Mint some tokens to the user
+
+    // Get the token account of the toWallet address, and if it does not exist, create it
+    const userTokenAccount = await getOrCreateAssociatedTokenAccount(
       anchorProvider.connection,
-      mintAddress,
       storage,
-      player,
-      amountToSell.toNumber()
+      mintAddress,
+      user.publicKey
     );
+
+    // Make mint
+    await program.methods
+      .mintToken(amountToSell)
+      .accounts({
+        mint: mintAddress,
+        tokenAccount: userTokenAccount.address,
+        authority: storagePDA,
+        tokenProgram: TOKEN_PROGRAM_ID
+      })
+      .signers([])
+      .rpc();
 
     const storageTokenBalanceBefore =
       await anchorProvider.connection.getTokenAccountBalance(
         storageTokenAddress
       );
-    const playerTokenAddress = await findAssociatedTokenAddress(
-      player,
-      mintAddress
-    );
     const playerTokenBalanceBefore =
       await anchorProvider.connection.getTokenAccountBalance(
-        playerTokenAddress
+        userTokenAccount.address
       );
 
     await program.methods
       .userSell(amountToSell)
       .accounts({
-        player: player,
+        player: playerPDA,
         mint: mintAddress,
         vaultToken: storageTokenAddress,
-        playerToken: playerTokenAddress,
+        playerToken: userTokenAccount.address,
         tokenProgram: TOKEN_PROGRAM_ID,
-        authority: storage.publicKey
+        authority: storagePDA
       })
-      .signers([storage])
+      .signers([])
       .rpc();
 
     const storageTokenBalanceAfter =
@@ -472,7 +479,7 @@ describe('Membrane', () => {
       );
     const playerTokenBalanceAfter =
       await anchorProvider.connection.getTokenAccountBalance(
-        playerTokenAddress
+        userTokenAccount.address
       );
 
     expect(
