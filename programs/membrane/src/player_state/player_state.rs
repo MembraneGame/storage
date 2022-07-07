@@ -38,6 +38,7 @@ pub fn update_player(ctx: Context<UpdatePlayer>, _bump: u8) -> Result<()> {
 pub struct InitializePlayer<'info> {
     #[account(init, payer = authority, space = constants::MAX_PLAYER_SIZE, seeds = [b"player".as_ref(), user.key().as_ref()], bump)]
     pub player: Box<Account<'info, Player>>,
+    /// CHECK: SAFE PROGRAM OWNED ACCOUNT
     #[account(mut)]
     pub authority: AccountInfo<'info>, //PDA
     #[account(mut)]
