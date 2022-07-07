@@ -22,6 +22,7 @@ import {
   initializeMint
 } from './utils/mocks';
 import {
+  FEE_LAMPORTS,
   MAX_PLAYER_SIZE,
   MAX_SIZE_REWARD,
   PLASMA_DECIMALS,
@@ -241,23 +242,33 @@ describe('Membrane', () => {
     const user = anchorProvider.wallet;
     const rating = new anchor.BN(0);
 
+    const storagePDABalanceBefore =
+      await anchorProvider.connection.getAccountInfo(storagePDA);
+
     await program.methods
       .initializePlayer(rating)
       .accounts({
         player: playerPDA,
+        authority: storagePDA,
         user: user.publicKey,
-        identity: user.publicKey,
         systemProgram
       })
       .signers([])
       .rpc();
 
     const playerAccount = await program.account.player.fetch(playerPDA);
+    const storagePDABalanceAfter =
+      await anchorProvider.connection.getAccountInfo(storagePDA);
 
     expect(playerAccount.identity.toBase58()).to.equal(
       user.publicKey.toBase58()
     );
     expect(playerAccount.rating.toNumber()).to.equal(rating.toNumber());
+
+    const lamportsBefore = storagePDABalanceBefore?.lamports || 0;
+    const lamportsAfter = storagePDABalanceAfter?.lamports || 0;
+
+    expect(lamportsBefore + FEE_LAMPORTS).to.equal(lamportsAfter);
   });
 
   it('Can make a single payout', async () => {
