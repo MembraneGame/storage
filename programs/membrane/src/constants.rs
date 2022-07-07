@@ -11,6 +11,7 @@ pub const VICTORY: u64 = 16800000000; //calculate the rewards based on the nft p
 pub const TOP_FIVE: u64 = 67200000000;
 pub const TOP_TEN: u64= 168000000000;
 pub const KILL: u64 = 120000000000;
+pub const FEE_LAMPORTS: u64 = 100_000_000; 
 
 
 //UNIX values
