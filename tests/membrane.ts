@@ -5,15 +5,14 @@ import {
   getAccount,
   getMint,
   getOrCreateAssociatedTokenAccount,
-  TOKEN_PROGRAM_ID, transfer
+  TOKEN_PROGRAM_ID
 } from '@solana/spl-token';
 import { Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { Membrane } from '../target/types/membrane';
 import {
   adjustSupply,
   findAssociatedTokenAddress,
-  getAirdrop,
-  sendToken
+  getAirdrop
 } from './utils/web3';
 import { expect } from 'chai';
 import {
@@ -26,7 +25,8 @@ import {
   MAX_PLAYER_SIZE,
   MAX_SIZE_REWARD,
   PLASMA_DECIMALS,
-  PLASMA_INITIAL_SUPPLY, VAULT_PDA_SEED
+  PLASMA_INITIAL_SUPPLY,
+  VAULT_PDA_SEED
 } from './utils/constants';
 
 describe('Membrane', () => {
@@ -133,7 +133,10 @@ describe('Membrane', () => {
   });
 
   it('Can transfer authority to the PDA', async () => {
-    const mintInfoBefore = await getMint(anchorProvider.connection, mintAddress);
+    const mintInfoBefore = await getMint(
+      anchorProvider.connection,
+      mintAddress
+    );
     const tokenAccountBefore = await getAccount(
       anchorProvider.connection,
       storageTokenAddress
@@ -166,9 +169,7 @@ describe('Membrane', () => {
     expect(mintInfoAfter.mintAuthority.toBase58()).to.equal(
       storagePDA.toBase58()
     );
-    expect(tokenAccountAfter.owner.toBase58()).to.equal(
-      storagePDA.toBase58()
-    );
+    expect(tokenAccountAfter.owner.toBase58()).to.equal(storagePDA.toBase58());
   });
 
   it('Can mint a token', async () => {
@@ -463,7 +464,7 @@ describe('Membrane', () => {
     await program.methods
       .userSell(amountToSell)
       .accounts({
-        player: playerPDA,
+        player: user.publicKey,
         mint: mintAddress,
         vaultToken: storageTokenAddress,
         playerToken: userTokenAccount.address,
