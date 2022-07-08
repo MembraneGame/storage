@@ -348,12 +348,6 @@ describe('Membrane', () => {
       await anchorProvider.connection.getTokenAccountBalance(
         storageTokenAddress
       );
-    const userTokenAccountAfter = await getOrCreateAssociatedTokenAccount(
-      anchorProvider.connection,
-      storage,
-      mintAddress,
-      user.publicKey
-    );
     const userTokenBalanceAfter =
       await anchorProvider.connection.getTokenAccountBalance(
         userTokenAccount.address
@@ -374,6 +368,7 @@ describe('Membrane', () => {
         )
       )
     ).to.be.true;
+    expect(playerAccountAfter.claimable.eq(new anchor.BN(0))).to.be.true;
   });
 
   it('User can sell the token', async () => {
