@@ -40,6 +40,7 @@ export const MAX_PLAYER_SIZE: number =
   DISCRIMINATOR +     // discriminator
   PUBKEY_MAX +        // identity pubkey
   (1 + FLOAT_MAX) +   // rating wrapped in some
+  FLOAT_MAX +         // claimable
   FLOAT_MAX;          // nft_counter
 
 // PDA SEEDS

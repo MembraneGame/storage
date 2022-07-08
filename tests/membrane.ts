@@ -442,4 +442,8 @@ describe('Membrane', () => {
       )
     ).to.be.true;
   });
+
+  it('Can freeze the authority for mint', async () => {
+    // TODO: freezeStorage test
+  });
 });
