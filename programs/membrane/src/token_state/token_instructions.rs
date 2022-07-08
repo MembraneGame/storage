@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, MintTo, Burn, Transfer, SetAuthority};
-use super::{MintToken, SellAndBurn, TransferAuthority};
+use anchor_spl::token::{self, MintTo, Burn, Transfer, SetAuthority, FreezeAccount};
+use super::{MintToken, SellAndBurn, TransferAuthority, FreezeStorage};
 use crate::constants::*;
 pub use spl_token;
 
@@ -35,6 +35,16 @@ pub fn transfer_authority(ctx: Context<TransferAuthority>) -> Result<()> {
     let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
 
     token::set_authority(cpi_ctx, spl_token::instruction::AuthorityType::AccountOwner, Some(pda_authority))?;
+
+    let cpi_accounts = SetAuthority {
+        current_authority: ctx.accounts.storage.to_account_info(),
+        account_or_mint: ctx.accounts.mint.to_account_info(),
+    };
+    let cpi_program = ctx.accounts.token_program.to_account_info();
+    let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
+    let (pda_authority, _bump) = Pubkey::find_program_address(&[VAULT_PDA_SEED], ctx.program_id);    
+    token::set_authority(cpi_ctx, spl_token::instruction::AuthorityType::FreezeAccount, Some(pda_authority))?;
 
     Ok(())
 }
@@ -125,6 +135,41 @@ pub fn user_sell(ctx: Context<SellAndBurn>, amount: u64) -> Result<()> { //signe
     //Define CpiContext<Burn>
     let cpi_burn_ctx = CpiContext::new_with_signer(cpi_burn_program, cpi_burn_accounts, seeds);
     token::burn(cpi_burn_ctx, amount/2)?;
+
+    Ok(())
+}
+
+pub fn freeze_storage(ctx: Context<FreezeStorage>) -> Result<()> {
+
+    let (_vault_authority, vault_authority_bump) = Pubkey::find_program_address(&[VAULT_PDA_SEED], ctx.program_id);
+    let authority_seeds = &[&VAULT_PDA_SEED[..], &[vault_authority_bump]];
+    let seeds = &[&authority_seeds[..]];
+
+    let cpi_accounts = FreezeAccount {
+        account: ctx
+        .accounts
+        .storage
+        .to_account_info(),
+
+        mint: ctx
+        .accounts
+        .mint
+        .to_account_info(),
+
+        authority: ctx
+        .accounts
+        .authority
+        .to_account_info(),
+    };
+
+    let cpi_program = ctx
+    .accounts
+    .token_program
+    .to_account_info();
+
+    let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, seeds);
+    token::freeze_account(cpi_ctx)?;
+
 
     Ok(())
 }

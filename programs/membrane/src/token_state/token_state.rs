@@ -61,3 +61,15 @@ pub struct TransferAuthority<'info> {
 //     pub authority: AccountInfo<'info>,
 //     pub token_program: Program<'info, Token>,
 // }
+
+#[derive(Accounts)]
+pub struct FreezeStorage<'info> {
+    #[account(mut)]
+    pub mint: Account<'info, Mint>,
+    pub token_program: Program<'info, Token>,
+    ///SAFE PROGRAM OWNED ACCOUNT
+    #[account(mut)]
+    pub authority: AccountInfo<'info>,
+    #[account(mut)]
+    pub storage: Account<'info, TokenAccount>,
+}

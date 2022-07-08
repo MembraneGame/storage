@@ -58,9 +58,9 @@ pub mod membrane {
         game_state::user_claim(ctx)
     }
 
-    // pub fn burn_token(ctx_burn: Context<BurnToken>, amount:u64) -> Result<()> {
-    //     token_state::burn_token(ctx_burn, amount)
-    // }
+    pub fn freeze_storage(ctx: Context<FreezeStorage>) -> Result<()> {
+        token_state::freeze_storage(ctx)
+    }
 
 }
 
