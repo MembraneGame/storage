@@ -15,7 +15,6 @@ declare_id!("FUbwV7PHj34RaBkifLAkcQ4zdtK6heSWhHVG6qWz5M1o");
 #[program]
 pub mod membrane {
 
-    //authority is always storage unless specified otherwise
     use super::*;
 
     pub fn initialize_reward(ctx: Context<InitializeReward>) -> Result<()> {
@@ -60,6 +59,10 @@ pub mod membrane {
 
     pub fn freeze_storage(ctx: Context<FreezeStorage>) -> Result<()> {
         token_state::freeze_storage(ctx)
+    }
+
+    pub fn return_authority(ctx: Context<ReturnAuthority>) -> Result<()> {
+        token_state::return_authority(ctx)
     }
 
 }

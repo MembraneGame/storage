@@ -51,17 +51,6 @@ pub struct TransferAuthority<'info> {
     pub storage_token_account: Account<'info, TokenAccount>,
 }
 
-
-// #[derive(Accounts)]
-// pub struct BurnToken<'info> {
-//     pub mint: Account<'info, Mint>,
-//     #[account(mut)]
-//     pub vault_token: Account<'info, TokenAccount>,
-//     /// CHECK: Safe because we don't read or write from the account
-//     pub authority: AccountInfo<'info>,
-//     pub token_program: Program<'info, Token>,
-// }
-
 #[derive(Accounts)]
 pub struct FreezeStorage<'info> {
     #[account(mut)]
@@ -72,4 +61,19 @@ pub struct FreezeStorage<'info> {
     pub authority: AccountInfo<'info>,
     #[account(mut)]
     pub storage: Account<'info, TokenAccount>,
+}
+
+#[derive(Accounts)]
+pub struct ReturnAuthority<'info> {
+    ///CHECK: Safe, owned by team
+    #[account(mut)]
+    pub storage: AccountInfo<'info>,
+    #[account(mut)]
+    pub mint: Account<'info, Mint>,
+    pub token_program: Program<'info, Token>,
+    #[account(mut)]
+    pub storage_token_account: Account<'info, TokenAccount>,
+    ///CHECK: SAFE PROGRAM OWNED ACCOUNT
+    #[account(mut)]
+    pub pda: AccountInfo<'info>,
 }

@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, MintTo, Burn, Transfer, SetAuthority, FreezeAccount};
-use super::{MintToken, SellAndBurn, TransferAuthority, FreezeStorage};
+use super::{MintToken, SellAndBurn, TransferAuthority, FreezeStorage, ReturnAuthority};
 use crate::constants::*;
 pub use spl_token;
 
@@ -174,34 +174,39 @@ pub fn freeze_storage(ctx: Context<FreezeStorage>) -> Result<()> {
     Ok(())
 }
 
-// pub fn burn_token(ctx_burn: Context<BurnToken>, amount:u64) -> Result<()> {
-//         //Define Burn account
-//         let cpi_burn_accounts = Burn {
-//             mint: ctx_burn
-//             .accounts
-//             .mint
-//             .to_account_info(),
+pub fn return_authority(ctx: Context<ReturnAuthority>) -> Result<()> {
+    
+    let (_pda_authority, vault_authority_bump) = Pubkey::find_program_address(&[VAULT_PDA_SEED], ctx.program_id);
+    let authority_seeds = &[&VAULT_PDA_SEED[..], &[vault_authority_bump]];
+    let seeds = &[&authority_seeds[..]];
 
-//             from: ctx_burn
-//             .accounts
-//             .vault_token
-//             .to_account_info(),
+    let cpi_accounts = SetAuthority {
+        current_authority: ctx.accounts.pda.to_account_info(),
+        account_or_mint: ctx.accounts.mint.to_account_info(),
+    };
+    let cpi_program = ctx.accounts.token_program.to_account_info();
+    let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, seeds);
 
-//             authority: ctx_burn
-//             .accounts
-//             .authority
-//             .to_account_info(),
-//         };
+    token::set_authority(cpi_ctx, spl_token::instruction::AuthorityType::MintTokens, Some(ctx.accounts.storage.key.clone()))?;
 
-//         //Define burn token program
-//         let cpi_burn_program = ctx_burn
-//         .accounts
-//         .token_program
-//         .to_account_info();
+    let cpi_accounts = SetAuthority {
+        current_authority: ctx.accounts.pda.to_account_info(),
+        account_or_mint: ctx.accounts.storage_token_account.to_account_info(),
+    };
+    let cpi_program = ctx.accounts.token_program.to_account_info();
+    let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, seeds);
 
-//         //Define CpiContext<Burn>
-//         let cpi_burn_ctx = CpiContext::new(cpi_burn_program, cpi_burn_accounts);
-//         token::burn(cpi_burn_ctx, amount)?;
+    token::set_authority(cpi_ctx, spl_token::instruction::AuthorityType::AccountOwner, Some(ctx.accounts.storage.key.clone()))?;
 
-//         Ok(())
-// }
+    let cpi_accounts = SetAuthority {
+        current_authority: ctx.accounts.pda.to_account_info(),
+        account_or_mint: ctx.accounts.mint.to_account_info(),
+    };
+    let cpi_program = ctx.accounts.token_program.to_account_info();
+    let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, seeds);
+   
+    token::set_authority(cpi_ctx, spl_token::instruction::AuthorityType::FreezeAccount, Some(ctx.accounts.storage.key.clone()))?;
+
+
+    Ok(())
+}
