@@ -4,6 +4,7 @@ use crate::player_state;
 use crate::errors;
 use crate::maths;
 pub use crate::constants;
+use crate::constants::VAULT_PDA_SEED;
 
 pub fn initialize_reward(ctx: Context<maths::InitializeReward>) -> Result<()> {
     let reward_account = &mut ctx.accounts.reward;
@@ -76,12 +77,10 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
     //     .accounts
     //     .vault_token
     //     .to_account_info(), 
-
     //     to: ctx
     //     .accounts
     //     .player_token
     //     .to_account_info(), 
-
     //     authority: ctx
     //     .accounts
     //     .sender
@@ -97,7 +96,11 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
 }
 
 //Fn to delegate claimable token to the user
-pub fn user_approve(ctx: Context<UserApprove>) -> Result<()> {
+pub fn user_claim(ctx: Context<UserClaim>) -> Result<()> {
+    let (_vault_authority, vault_authority_bump) = Pubkey::find_program_address(&[VAULT_PDA_SEED], ctx.program_id);
+    let authority_seeds = &[&VAULT_PDA_SEED[..], &[vault_authority_bump]];
+    let seeds = &[&authority_seeds[..]];
+
     let player = &mut ctx.accounts.player;
 
     //Define Approve account
@@ -119,34 +122,9 @@ pub fn user_approve(ctx: Context<UserApprove>) -> Result<()> {
     };
     //Define token program
     let cpi_program = ctx.accounts.token_program.to_account_info();
-    //Define CpiContext<Approve>
-    let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
+    //Define CpiContext<Approve> with PDA signer seeds
+    let cpi_ctx= CpiContext::new_with_signer(cpi_program, cpi_accounts, seeds);
     token::approve(cpi_ctx, player.claimable)?;
-
-    //not sure if revoke is necessary, since solana can automatically change the delegated_amount
-    // //Define Revoke account
-    // let cpi_accounts = Revoke {
-    //     source: ctx
-    //     .accounts
-    //     .user
-    //     .to_account_info(), 
-
-    //     authority: ctx
-    //     .accounts
-    //     .authority
-    //     .to_account_info(), 
-    // };
-    // let cpi_program = ctx.accounts.token_program.to_account_info();
-    // let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
-    // token::revoke(cpi_ctx)?;
-    
-    Ok(())
-}
-
-//Fn for the user to claim their delegated tokens
-pub fn user_claim(ctx: Context<UserClaim>) -> Result<()> {
-    
-    let player = &mut ctx.accounts.player;
 
     //Define Transfer account
     let cpi_accounts = Transfer {
@@ -173,6 +151,23 @@ pub fn user_claim(ctx: Context<UserClaim>) -> Result<()> {
     token::transfer(cpi_ctx, player.claimable)?;
 
     player.claimable = 0;
+
+    //not sure if revoke is necessary, since solana can automatically change the delegated_amount, test needed
+    // //Define Revoke account
+    // let cpi_accounts = Revoke {
+    //     source: ctx
+    //     .accounts
+    //     .user
+    //     .to_account_info(), 
+    //     authority: ctx
+    //     .accounts
+    //     .authority
+    //     .to_account_info(), 
+    // };
+    // let cpi_program = ctx.accounts.token_program.to_account_info();
+    // let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
+    // token::revoke(cpi_ctx)?;
+    
     Ok(())
 }
 
@@ -192,26 +187,14 @@ pub struct CalculateReward<'info> {
 }
 
 #[derive(Accounts)]
-pub struct UserApprove<'info> {
-        #[account(mut)]
-        pub player: Account<'info, player_state::Player>,
-        ///CHECK: Safe because we do not read or write from the account
-        pub user: UncheckedAccount<'info>,
-        pub authority: Signer<'info>, //authority is storage
-        #[account(mut)]
-        pub vault_token: Account<'info, TokenAccount>,
-        #[account(mut)]
-        pub player_token: Account<'info, TokenAccount>,
-        pub mint: Account<'info, Mint>,
-        pub token_program: Program<'info, Token>,
-}
-
-#[derive(Accounts)]
 pub struct UserClaim<'info> {
         #[account(mut)]
         pub player: Account<'info, player_state::Player>,
+        #[account(mut)]
         pub user: Signer<'info>,
-        pub authority: Signer<'info>,
+        /// CHECK: SAFE PROGRAM OWNED ACCOUNT
+        #[account(mut)]
+        pub authority: AccountInfo<'info>, //PDA
         #[account(mut)]
         pub vault_token: Account<'info, TokenAccount>,
         #[account(mut)]
