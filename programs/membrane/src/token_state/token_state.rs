@@ -56,11 +56,10 @@ pub struct FreezeStorage<'info> {
     #[account(mut)]
     pub mint: Account<'info, Mint>,
     pub token_program: Program<'info, Token>,
-    /// CHECK: SAFE PROGRAM OWNED ACCOUNT
     #[account(mut)]
-    pub authority: AccountInfo<'info>,
+    pub storage_token_account: Account<'info, TokenAccount>,
     #[account(mut)]
-    pub storage: Account<'info, TokenAccount>,
+    pub storage: Signer<'info>,
 }
 
 #[derive(Accounts)]
