@@ -69,8 +69,7 @@ pub struct Player {
     pub stats: IndStats,
 }
 
-#[account]
-#[derive(Default)]
+#[derive(Default, AnchorDeserialize, AnchorSerialize, Clone)]
 pub struct IndStats {
     pub games: u64,
     pub wins: u64,

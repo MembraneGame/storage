@@ -5,6 +5,7 @@ use crate::errors;
 use crate::maths;
 pub use crate::constants;
 use crate::constants::VAULT_PDA_SEED;
+use player_state::IndStats;
 
 pub fn initialize_reward(ctx: Context<maths::InitializeReward>) -> Result<()> {
     let reward_account = &mut ctx.accounts.reward;
@@ -15,7 +16,7 @@ pub fn initialize_reward(ctx: Context<maths::InitializeReward>) -> Result<()> {
 }
 
 
-pub fn calculate_values(_ctx: Context<RewardValues>, stats: Vec<player_state::IndStats>) -> Result<()> {
+pub fn calculate_values(_ctx: Context<RewardValues>, stats: Vec<IndStats>) -> Result<()> {
     
     #[derive(Default)]
     struct Counter {
