@@ -5,6 +5,7 @@ use anchor_lang::prelude::*;
 // use crate::maths;
 pub use crate::constants;
 // use crate::constants::VAULT_PDA_SEED;
+use super::Stats;
 
 pub fn start_game(ctx: Context<StartGame>, _identifier: u64) -> Result<()> {
     let game = &mut ctx.accounts.game;
@@ -68,7 +69,7 @@ pub struct History { //one game is 1492 bytes // 7028 games for accout size over
 pub struct Game {
     pub identifier: u64, //8
     pub duration: u64, //8 
-    pub player_stats: Vec<super::Stats>, //1476
+    pub player_stats: Vec<Stats>, //1476
 }
 
 #[account]
