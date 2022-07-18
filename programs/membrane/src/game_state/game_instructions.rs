@@ -281,6 +281,7 @@ pub struct SingleReward<'info> {
     pub player: Account<'info, player_state::Player>,
     #[account(init_if_needed, payer = pda, space = 10000)]
     pub stats: Account<'info, AccumulatedStatistics>,
+    /// CHECK: SAFE PROGRAM OWNED ACCOUNT
     #[account(mut, signer)]
     pub pda: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
