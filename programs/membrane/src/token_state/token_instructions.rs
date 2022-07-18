@@ -1,4 +1,4 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, solana_program::{program::invoke_signed, system_instruction}};
 use anchor_spl::token::{self, MintTo, Burn, Transfer, SetAuthority, FreezeAccount};
 use super::{MintToken, SellAndBurn, TransferAuthority, FreezeStorage, ReturnAuthority};
 use crate::constants::*;
@@ -207,6 +207,17 @@ pub fn return_authority(ctx: Context<ReturnAuthority>) -> Result<()> {
    
     token::set_authority(cpi_ctx, spl_token::instruction::AuthorityType::FreezeAccount, Some(ctx.accounts.storage.key.clone()))?;
 
+    let balance = ctx.accounts.pda.to_account_info().lamports();
+
+    invoke_signed(
+        &system_instruction::transfer(ctx.accounts.pda.key, ctx.accounts.storage.key, balance),
+        &[
+            ctx.accounts.pda.to_account_info(),
+            ctx.accounts.storage.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+        ],
+        seeds,
+    )?;
 
     Ok(())
 }

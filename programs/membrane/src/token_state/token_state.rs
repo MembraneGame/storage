@@ -76,4 +76,5 @@ pub struct ReturnAuthority<'info> {
     ///CHECK: SAFE PROGRAM OWNED ACCOUNT
     #[account(mut)]
     pub pda: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
 }
