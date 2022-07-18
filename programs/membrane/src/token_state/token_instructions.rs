@@ -1,20 +1,8 @@
-use anchor_lang::{prelude::*, solana_program::{program::invoke_signed, system_instruction}};
-use anchor_spl::token::{self, MintTo, Burn, Transfer, SetAuthority, FreezeAccount};
+use anchor_lang::prelude::*;
+use anchor_spl::token::{self, MintTo, Burn, Transfer, SetAuthority, FreezeAccount, CloseAccount};
 use super::{MintToken, SellAndBurn, TransferAuthority, FreezeStorage, ReturnAuthority};
 use crate::constants::*;
 pub use spl_token;
-
-//Fn to initialize mint
-// pub fn initialize_mint(ctx:Context<MintInitialize>) -> Result<()> {
-//     let cpi_accounts = InitializeMint {
-//         mint: ctx.accounts.mint.to_account_info(),
-//         rent: ctx.accounts.rent.to_account_info(),
-//     };
-//     let cpi_program = ctx.accounts.token_program.to_account_info();
-//     let cpi_ctx= CpiContext::new(cpi_program, cpi_accounts);
-//     token::initialize_mint(cpi_ctx, 9, ctx.accounts.authority.key, Some(ctx.accounts.authority.key))?;
-//     Ok(())
-// }
 
 pub fn transfer_authority(ctx: Context<TransferAuthority>) -> Result<()> {
     let cpi_accounts = SetAuthority {
@@ -141,14 +129,10 @@ pub fn user_sell(ctx: Context<SellAndBurn>, amount: u64) -> Result<()> { //signe
 
 pub fn freeze_storage(ctx: Context<FreezeStorage>) -> Result<()> {
 
-    let (_vault_authority, vault_authority_bump) = Pubkey::find_program_address(&[VAULT_PDA_SEED], ctx.program_id);
-    let authority_seeds = &[&VAULT_PDA_SEED[..], &[vault_authority_bump]];
-    let seeds = &[&authority_seeds[..]];
-
     let cpi_accounts = FreezeAccount {
         account: ctx
         .accounts
-        .storage
+        .storage_token_account
         .to_account_info(),
 
         mint: ctx
@@ -158,7 +142,7 @@ pub fn freeze_storage(ctx: Context<FreezeStorage>) -> Result<()> {
 
         authority: ctx
         .accounts
-        .authority
+        .storage
         .to_account_info(),
     };
 
@@ -167,9 +151,8 @@ pub fn freeze_storage(ctx: Context<FreezeStorage>) -> Result<()> {
     .token_program
     .to_account_info();
 
-    let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, seeds);
+    let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
     token::freeze_account(cpi_ctx)?;
-
 
     Ok(())
 }
@@ -207,17 +190,16 @@ pub fn return_authority(ctx: Context<ReturnAuthority>) -> Result<()> {
    
     token::set_authority(cpi_ctx, spl_token::instruction::AuthorityType::FreezeAccount, Some(ctx.accounts.storage.key.clone()))?;
 
-    let balance = ctx.accounts.pda.to_account_info().lamports();
 
-    invoke_signed(
-        &system_instruction::transfer(ctx.accounts.pda.key, ctx.accounts.storage.key, balance),
-        &[
-            ctx.accounts.pda.to_account_info(),
-            ctx.accounts.storage.to_account_info(),
-            ctx.accounts.system_program.to_account_info(),
-        ],
-        seeds,
-    )?;
+    let cpi_accounts = CloseAccount {
+        account: ctx.accounts.pda.to_account_info(),
+        destination: ctx.accounts.storage.to_account_info(),
+        authority: ctx.accounts.pda.to_account_info(),
+    };
+    let cpi_program = ctx.accounts.token_program.to_account_info();
+    let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, seeds);
+
+    token::close_account(cpi_ctx)?;
 
     Ok(())
 }

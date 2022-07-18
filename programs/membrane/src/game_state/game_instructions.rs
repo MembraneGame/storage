@@ -40,10 +40,10 @@ pub fn calculate_values(_ctx: Context<RewardValues>, stats: Vec<IndStats>) -> Re
         counter.kills_count = counter.kills_count + kills;
     }
     
-    let vic_prob = counter.vic_count as f64 / (1000.0 * stats.len() as f64);
-    let top_five_prob = counter.top_five_count as f64 / (1000.0 * stats.len() as f64);
-    let top_ten_prob = counter.top_ten_count as f64 / (1000.0 * stats.len() as f64);
-    let kills_prob = counter.kills_count as f64 / (1000.0 * stats.len() as f64);
+    let _vic_prob = counter.vic_count as f64 / (1000.0 * stats.len() as f64);
+    let _top_five_prob = counter.top_five_count as f64 / (1000.0 * stats.len() as f64);
+    let _top_ten_prob = counter.top_ten_count as f64 / (1000.0 * stats.len() as f64);
+    let _kills_prob = counter.kills_count as f64 / (1000.0 * stats.len() as f64);
 
 
     Ok(())
