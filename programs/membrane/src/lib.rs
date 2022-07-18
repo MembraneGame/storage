@@ -45,8 +45,8 @@ pub mod membrane {
         token_state::user_sell(ctx, amount)
     }
 
-    pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u64) -> Result<()> {
-        game_state::calculate_reward(ctx, placement, kills)
+    pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u64, bump: u8, identifier: u64) -> Result<()> {
+        game_state::calculate_reward(ctx, placement, kills, bump, identifier)
     }
 
     pub fn user_approve(ctx: Context<UserClaim>) -> Result<()> {
