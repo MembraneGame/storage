@@ -15,16 +15,19 @@ declare_id!("FUbwV7PHj34RaBkifLAkcQ4zdtK6heSWhHVG6qWz5M1o");
 #[program]
 pub mod membrane {
 
-    //authority is always storage unless specified otherwise
     use super::*;
 
     pub fn initialize_reward(ctx: Context<InitializeReward>) -> Result<()> {
         game_state::initialize_reward(ctx)
     }
 
-    // pub fn initialize_mint(ctx:Context<MintInitialize>) -> Result<()> {
-    //     token_state::initialize_mint(ctx)
-    // }
+    pub fn start_game(ctx: Context<StartGame>, identifier: u64) -> Result<()> {
+        game_state::start_game(ctx, identifier)
+    }
+
+    pub fn end_game(ctx: Context<EndGame>, epoch: u64, identifier: u64, bump_players : u8) -> Result<()> {
+        game_state::end_game(ctx, epoch, identifier, bump_players)
+    }
 
     pub fn transfer_authority(ctx: Context<TransferAuthority>) -> Result<()> { //transfer authority to mint tokens to PDA
         token_state::transfer_authority(ctx)
@@ -46,8 +49,8 @@ pub mod membrane {
         token_state::user_sell(ctx, amount)
     }
 
-    pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u64) -> Result<()> {
-        game_state::calculate_reward(ctx, placement, kills)
+    pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u64, bump: u8, identifier: u64) -> Result<()> {
+        game_state::calculate_reward(ctx, placement, kills, bump, identifier)
     }
 
     pub fn user_approve(ctx: Context<UserClaim>) -> Result<()> {
@@ -60,6 +63,10 @@ pub mod membrane {
 
     pub fn freeze_storage(ctx: Context<FreezeStorage>) -> Result<()> {
         token_state::freeze_storage(ctx)
+    }
+
+    pub fn return_authority(ctx: Context<ReturnAuthority>) -> Result<()> {
+        token_state::return_authority(ctx)
     }
 
 }

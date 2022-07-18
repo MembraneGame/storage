@@ -19,6 +19,7 @@ pub fn create_player(ctx: Context<InitializePlayer>, rating: Option<i64>) -> Res
     player.claimable = 0;
     player.nft_counter = 1; //account is created when user buys their first nft
     player.identity = ctx.accounts.user.key();
+    player.stats = Default::default();
 
     match rating {
         Some(x) => player.rating = Some(x),
@@ -51,8 +52,8 @@ pub struct InitializePlayer<'info> {
 pub struct UpdatePlayer<'info> {
     #[account(mut, has_one = identity, seeds = [b"player".as_ref(), identity.key().as_ref()], bump = bump)]
     pub player: Box<Account<'info, Player>>,
-    #[account(mut)]
-    pub payer: Signer<'info>,
+    // #[account(mut)]
+    // pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,
     pub identity: Signer<'info>,
 }
@@ -64,5 +65,16 @@ pub struct Player {
     //pub bump: u8,
     pub rating: Option<i64>,
     pub claimable: u64,
-    nft_counter: u64,
+    pub nft_counter: u64,
+    pub stats: IndStats,
+}
+
+#[account]
+#[derive(Default)]
+pub struct IndStats {
+    pub games: u64,
+    pub wins: u64,
+    pub top_five: u64, //2-5
+    pub top_ten: u64, //6-10
+    pub kills: u64,
 }
