@@ -11,7 +11,7 @@ pub const VICTORY: u64 = 16800000000; //calculate the rewards based on the nft p
 pub const TOP_FIVE: u64 = 67200000000;
 pub const TOP_TEN: u64= 168000000000;
 pub const KILL: u64 = 120000000000;
-pub const FEE_LAMPORTS: u64 = 100_000_000; 
+pub const FEE_LAMPORTS: u64 = 100_000_000;
 
 
 //UNIX values
@@ -19,7 +19,7 @@ pub const START: i64 = 1654797600; //smart contract start date, program not depl
 pub const SEC_IN_DAY: i64 = 86400; //seconds in day to calculate current day from the start
 
 //Player account
-pub const MAX_PLAYER_SIZE: usize = FLOAT_MAX + (1+FLOAT_MAX) + DISCRIMINATOR + FLOAT_MAX + PUBKEY_MAX; //u64 + rating wrapped in some + discriminator for Player account + claimable i64 + pubkey
+pub const MAX_PLAYER_SIZE: usize = FLOAT_MAX + (1+FLOAT_MAX) + DISCRIMINATOR + FLOAT_MAX + PUBKEY_MAX + 5*FLOAT_MAX; //u64 + rating wrapped in some + discriminator for Player account + claimable i64 + pubkey
 
 
 //PDA SEEDS
