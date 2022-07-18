@@ -64,7 +64,7 @@ pub struct History { //one game is 1492 bytes // 7028 games for accout size over
     pub games: Vec<Game>, //1492 + 4
 }
 
-#[account]
+#[derive(AnchorDeserialize, AnchorSerialize, Clone)]
 pub struct Game {
     pub identifier: u64, //8
     pub duration: u64, //8 

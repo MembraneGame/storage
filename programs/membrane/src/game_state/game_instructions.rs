@@ -266,8 +266,7 @@ pub struct PlayersStats {
     pub players: Vec<Stats>, //4 + 1472
 }
 
-#[account]
-#[derive(Default)]
+#[derive(Default, AnchorDeserialize, AnchorSerialize, Clone)]
 pub struct Stats { //(32 + 1 + 1 + 4 + 8) * 32 = 1472
     pub id: Pubkey, //32
     pub placement: u8, //1
