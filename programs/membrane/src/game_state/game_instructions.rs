@@ -226,7 +226,7 @@ pub fn user_claim(ctx: Context<UserClaim>) -> Result<()> {
 }
 
 #[derive(Accounts)]
-#[instruction(bump: u8, identifier: u64)]
+#[instruction(identifier: u64)]
 pub struct CalculateReward<'info> {
         #[account(mut)]
         pub reward: Account<'info, maths::Reward>,
