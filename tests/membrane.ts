@@ -48,6 +48,9 @@ describe('Membrane', () => {
   let player: PublicKey;
   let playerPDA: PublicKey; // player account PDA
   let playerBump: number;
+  let gamePDA: PublicKey;
+  let gameBump: number;
+  const identifier: anchor.BN = new anchor.BN(0);
 
   before(async () => {
     // TODO: create first initialize script
@@ -80,6 +83,16 @@ describe('Membrane', () => {
 
     playerPDA = _playerPDA;
     playerBump = _playerBump;
+
+    // Generate game account PDA
+    const [_gamePDA, _gameBump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [Buffer.from('game'), Buffer.from(identifier.toString())],
+        program.programId
+      );
+
+    gamePDA = _gamePDA;
+    gameBump = _gameBump;
 
     // Estimate rent exemption for accounts (in SOL)
     // const playerAccountMaxRent =
@@ -244,14 +257,15 @@ describe('Membrane', () => {
     const user = anchorProvider.wallet;
     const rating = new anchor.BN(0);
 
-    const storagePDABalanceBefore =
-      await anchorProvider.connection.getAccountInfo(storagePDA);
+    const storageBalanceBefore =
+      await anchorProvider.connection.getAccountInfo(storage.publicKey);
 
     await program.methods
       .initializePlayer(rating)
       .accounts({
         player: playerPDA,
         authority: storagePDA,
+        storage: storage.publicKey,
         user: user.publicKey,
         systemProgram
       })
@@ -259,35 +273,61 @@ describe('Membrane', () => {
       .rpc();
 
     const playerAccount = await program.account.player.fetch(playerPDA);
-    const storagePDABalanceAfter =
-      await anchorProvider.connection.getAccountInfo(storagePDA);
+    const storageBalanceAfter =
+      await anchorProvider.connection.getAccountInfo(storage.publicKey);
 
-    expect(playerAccount.identity.toBase58()).to.equal(
+    expect(playerAccount?.identity.toBase58()).to.equal(
       user.publicKey.toBase58()
     );
-    expect(playerAccount.rating.toNumber()).to.equal(rating.toNumber());
+    expect(playerAccount?.rating.toNumber()).to.equal(rating.toNumber());
 
-    const lamportsBefore = storagePDABalanceBefore?.lamports || 0;
-    const lamportsAfter = storagePDABalanceAfter?.lamports || 0;
+    const lamportsBefore = storageBalanceBefore?.lamports || 0;
+    const lamportsAfter = storageBalanceAfter?.lamports || 0;
 
     expect(lamportsBefore + FEE_LAMPORTS).to.equal(lamportsAfter);
   });
 
-  it.skip('Can make a single payout', async () => {
+  it('Can start a game', async () => {
+    await program.methods
+      .startGame(identifier)
+      .accounts({
+        game: gamePDA,
+        storage: storage.publicKey,
+        systemProgram
+      })
+      .signers([storage])
+      .rpc();
+
+    const gameAccount = await program.account.gameStart.fetch(gamePDA);
+
+    expect(gameAccount?.timestamp.toNumber()).to.be.a('number');
+  });
+
+  it('Can make a single payout', async () => {
     const { placement, kills } = generateRandomGameResult();
+    // Generate game account PDA
+    const [playersStatsPDA, playersStatsBump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [Buffer.from('players'), Buffer.from(identifier.toString())],
+        program.programId
+      );
 
     const playerAccountBefore = await program.account.player.fetch(playerPDA);
 
     await program.methods
-      .calculateReward(placement, kills, playerBump, new anchor.BN(0))
+      .calculateReward(placement, kills, identifier)
       .accounts({
         reward: reward.publicKey,
-        player: playerPDA
+        player: playerPDA,
+        playersStats: playersStatsPDA,
+        storage: storage.publicKey,
       })
-      .signers([])
+      .signers([storage])
       .rpc();
 
     const playerAccountAfter = await program.account.player.fetch(playerPDA);
+
+    console.log({ playerAccountAfter });
 
     const rewardMock = calculateInitialRewardParams(PLASMA_DECIMALS);
     const { rewardAmount, ratingChange } = calculatePlayerPayout(
