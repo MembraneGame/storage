@@ -82,20 +82,20 @@ describe('Membrane', () => {
     playerBump = _playerBump;
 
     // Estimate rent exemption for accounts (in SOL)
-    const playerAccountMaxRent =
-      await anchorProvider.connection.getMinimumBalanceForRentExemption(
-        MAX_PLAYER_SIZE
-      );
-    const rewardAccountMaxRent =
-      await anchorProvider.connection.getMinimumBalanceForRentExemption(
-        MAX_SIZE_REWARD
-      );
-    console.log({
-      MAX_PLAYER_SIZE,
-      MAX_SIZE_REWARD,
-      playerAccountMaxRent: playerAccountMaxRent / LAMPORTS_PER_SOL,
-      rewardAccountMaxRent: rewardAccountMaxRent / LAMPORTS_PER_SOL
-    });
+    // const playerAccountMaxRent =
+    //   await anchorProvider.connection.getMinimumBalanceForRentExemption(
+    //     MAX_PLAYER_SIZE
+    //   );
+    // const rewardAccountMaxRent =
+    //   await anchorProvider.connection.getMinimumBalanceForRentExemption(
+    //     MAX_SIZE_REWARD
+    //   );
+    // console.log({
+    //   MAX_PLAYER_SIZE,
+    //   MAX_SIZE_REWARD,
+    //   playerAccountMaxRent: playerAccountMaxRent / LAMPORTS_PER_SOL,
+    //   rewardAccountMaxRent: rewardAccountMaxRent / LAMPORTS_PER_SOL
+    // });
   });
 
   it('Can initialize mint', async () => {
@@ -445,35 +445,7 @@ describe('Membrane', () => {
     ).to.be.true;
   });
 
-  it('Can freeze the authority for mint', async () => {
-    const tokenAccountBefore = await getAccount(
-      anchorProvider.connection,
-      storageTokenAddress
-    );
-
-    expect(tokenAccountBefore.isFrozen).to.be.false;
-
-    await program.methods
-      .freezeStorage()
-      .accounts({
-        mint: mintAddress,
-        // TODO: INCONSISTENCY rename "storage" account to the storageTokenAccount
-        storage: storageTokenAddress,
-        authority: storagePDA,
-        tokenProgram: TOKEN_PROGRAM_ID
-      })
-      .signers([])
-      .rpc();
-
-    const tokenAccountAfter = await getAccount(
-      anchorProvider.connection,
-      storageTokenAddress
-    );
-
-    expect(tokenAccountAfter.isFrozen).to.be.true;
-  });
-
-  it.skip('Can return the authority back to the storage', async () => {
+  it('Can return the authority back to the storage', async () => {
     const mintInfoBefore = await getMint(
       anchorProvider.connection,
       mintAddress
@@ -482,9 +454,12 @@ describe('Membrane', () => {
       anchorProvider.connection,
       storageTokenAddress
     );
-
-    // const storagePDABalanceBefore =
-    //   await anchorProvider.connection.getAccountInfo(storagePDA);
+    const storagePDABalanceBefore =
+      await anchorProvider.connection.getAccountInfo(storagePDA);
+    const storageBalanceBefore =
+      await anchorProvider.connection.getAccountInfo(storage.publicKey);
+    const storagePDALamportsBefore = storagePDABalanceBefore?.lamports || 0;
+    const storageLamportsBefore = storageBalanceBefore?.lamports || 0;
 
     expect(mintInfoBefore.mintAuthority.toBase58()).to.equal(
       storagePDA.toBase58()
@@ -509,6 +484,12 @@ describe('Membrane', () => {
       anchorProvider.connection,
       storageTokenAddress
     );
+    const storagePDABalanceAfter =
+      await anchorProvider.connection.getAccountInfo(storagePDA);
+    const storageBalanceAfter =
+      await anchorProvider.connection.getAccountInfo(storage.publicKey);
+    const storagePDALamportsAfter = storagePDABalanceAfter?.lamports || 0;
+    const storageLamportsAfter = storageBalanceAfter?.lamports || 0;
 
     expect(mintInfoAfter.mintAuthority.toBase58()).to.equal(
       storage.publicKey.toBase58()
@@ -516,5 +497,34 @@ describe('Membrane', () => {
     expect(tokenAccountAfter.owner.toBase58()).to.equal(
       storage.publicKey.toBase58()
     );
+    expect(storagePDALamportsAfter).to.equal(0);
+    expect(storageLamportsAfter).to.equal(storageLamportsBefore + storagePDALamportsBefore);
+  });
+
+  it('Can freeze the authority for mint', async () => {
+    const tokenAccountBefore = await getAccount(
+      anchorProvider.connection,
+      storageTokenAddress
+    );
+
+    expect(tokenAccountBefore.isFrozen).to.be.false;
+
+    await program.methods
+      .freezeStorage()
+      .accounts({
+        mint: mintAddress,
+        storage: storage.publicKey,
+        storageTokenAccount: storageTokenAddress,
+        tokenProgram: TOKEN_PROGRAM_ID
+      })
+      .signers([storage])
+      .rpc();
+
+    const tokenAccountAfter = await getAccount(
+      anchorProvider.connection,
+      storageTokenAddress
+    );
+
+    expect(tokenAccountAfter.isFrozen).to.be.true;
   });
 });
