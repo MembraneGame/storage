@@ -232,9 +232,9 @@ pub struct CalculateReward<'info> {
         #[account(seeds = [b"game".as_ref(), identifier.to_string().as_bytes()], bump = bump)]
         pub game: Account<'info, super::GameStart>,
         /// CHECK: SAFE PROGRAM OWNED ACCOUNT
-        #[account(mut, signer)]
-        pub pda: AccountInfo<'info>,
-        #[account(init_if_needed, seeds = [b"players".as_ref(), identifier.to_string().as_bytes()], bump, payer = pda, space = 10000)]
+        #[account(mut)]
+        pub storage: Signer<'info>,
+        #[account(init_if_needed, seeds = [b"players".as_ref(), identifier.to_string().as_bytes()], bump, payer = storage, space = 10000)]
         pub players_stats: Account<'info, PlayersStats>,
         pub system_program: Program<'info, System>,
 }
