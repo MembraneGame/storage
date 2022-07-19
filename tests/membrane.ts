@@ -12,8 +12,7 @@ import { Membrane } from '../target/types/membrane';
 import {
   adjustSupply,
   findAssociatedTokenAddress,
-  getAirdrop,
-  sendToken
+  getAirdrop
 } from './utils/web3';
 import { expect } from 'chai';
 import {
@@ -23,10 +22,12 @@ import {
   initializeMint
 } from './utils/mocks';
 import {
+  FEE_LAMPORTS,
   MAX_PLAYER_SIZE,
   MAX_SIZE_REWARD,
   PLASMA_DECIMALS,
-  PLASMA_INITIAL_SUPPLY
+  PLASMA_INITIAL_SUPPLY,
+  VAULT_PDA_SEED
 } from './utils/constants';
 
 describe('Membrane', () => {
@@ -40,10 +41,13 @@ describe('Membrane', () => {
   const tokenProgram = spl.TOKEN_PROGRAM_ID;
 
   let storage: Keypair;
+  let storagePDA: PublicKey; // storage account PDA
   let reward: Keypair;
   let mintAddress: PublicKey;
   let storageTokenAddress: PublicKey;
-  let player: PublicKey; // player account PDA
+  let player: PublicKey;
+  let playerPDA: PublicKey; // player account PDA
+  let playerBump: number;
 
   before(async () => {
     // TODO: create first initialize script
@@ -58,21 +62,40 @@ describe('Membrane', () => {
     mintAddress = mintResult.mintAddress;
     storageTokenAddress = mintResult.associatedTokenAddress;
 
+    // Get storage account PDA
+    const [_storagePDA, _storageBump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [Buffer.from(VAULT_PDA_SEED)],
+        program.programId
+      );
+
+    storagePDA = _storagePDA;
+
+    // Generate player account PDA
+    const [_playerPDA, _playerBump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [Buffer.from('player'), anchorProvider.wallet.publicKey.toBuffer()],
+        program.programId
+      );
+
+    playerPDA = _playerPDA;
+    playerBump = _playerBump;
+
     // Estimate rent exemption for accounts (in SOL)
-    const playerAccountMaxRent =
-      await anchorProvider.connection.getMinimumBalanceForRentExemption(
-        MAX_PLAYER_SIZE
-      );
-    const rewardAccountMaxRent =
-      await anchorProvider.connection.getMinimumBalanceForRentExemption(
-        MAX_SIZE_REWARD
-      );
-    console.log({
-      MAX_PLAYER_SIZE,
-      MAX_SIZE_REWARD,
-      playerAccountMaxRent: playerAccountMaxRent / LAMPORTS_PER_SOL,
-      rewardAccountMaxRent: rewardAccountMaxRent / LAMPORTS_PER_SOL
-    });
+    // const playerAccountMaxRent =
+    //   await anchorProvider.connection.getMinimumBalanceForRentExemption(
+    //     MAX_PLAYER_SIZE
+    //   );
+    // const rewardAccountMaxRent =
+    //   await anchorProvider.connection.getMinimumBalanceForRentExemption(
+    //     MAX_SIZE_REWARD
+    //   );
+    // console.log({
+    //   MAX_PLAYER_SIZE,
+    //   MAX_SIZE_REWARD,
+    //   playerAccountMaxRent: playerAccountMaxRent / LAMPORTS_PER_SOL,
+    //   rewardAccountMaxRent: rewardAccountMaxRent / LAMPORTS_PER_SOL
+    // });
   });
 
   it('Can initialize mint', async () => {
@@ -112,6 +135,46 @@ describe('Membrane', () => {
     );
   });
 
+  it('Can transfer authority to the PDA', async () => {
+    const mintInfoBefore = await getMint(
+      anchorProvider.connection,
+      mintAddress
+    );
+    const tokenAccountBefore = await getAccount(
+      anchorProvider.connection,
+      storageTokenAddress
+    );
+
+    expect(mintInfoBefore.mintAuthority.toBase58()).to.equal(
+      storage.publicKey.toBase58()
+    );
+    expect(tokenAccountBefore.owner.toBase58()).to.equal(
+      storage.publicKey.toBase58()
+    );
+
+    await program.methods
+      .transferAuthority()
+      .accounts({
+        storage: storage.publicKey,
+        storageTokenAccount: storageTokenAddress,
+        mint: mintAddress,
+        tokenProgram: TOKEN_PROGRAM_ID
+      })
+      .signers([storage])
+      .rpc();
+
+    const mintInfoAfter = await getMint(anchorProvider.connection, mintAddress);
+    const tokenAccountAfter = await getAccount(
+      anchorProvider.connection,
+      storageTokenAddress
+    );
+
+    expect(mintInfoAfter.mintAuthority.toBase58()).to.equal(
+      storagePDA.toBase58()
+    );
+    expect(tokenAccountAfter.owner.toBase58()).to.equal(storagePDA.toBase58());
+  });
+
   it('Can mint a token', async () => {
     const amountToMint = new anchor.BN(adjustSupply(1000, PLASMA_DECIMALS));
 
@@ -125,10 +188,10 @@ describe('Membrane', () => {
       .accounts({
         mint: mintAddress,
         tokenAccount: storageTokenAddress,
-        authority: storage.publicKey,
+        authority: storagePDA,
         tokenProgram: TOKEN_PROGRAM_ID
       })
-      .signers([storage])
+      .signers([])
       .rpc();
 
     const storageTokenBalanceAfter =
@@ -181,49 +244,50 @@ describe('Membrane', () => {
     const user = anchorProvider.wallet;
     const rating = new anchor.BN(0);
 
-    // Generate player account PDA
-    const [playerAccountPDA, playerAccountPDABump] =
-      await anchor.web3.PublicKey.findProgramAddress(
-        [Buffer.from('player'), user.publicKey.toBuffer()],
-        program.programId
-      );
-
-    player = playerAccountPDA;
+    const storagePDABalanceBefore =
+      await anchorProvider.connection.getAccountInfo(storagePDA);
 
     await program.methods
       .initializePlayer(rating)
       .accounts({
-        player,
+        player: playerPDA,
+        authority: storagePDA,
         user: user.publicKey,
-        identity: user.publicKey,
         systemProgram
       })
       .signers([])
       .rpc();
 
-    const playerAccount = await program.account.player.fetch(player);
+    const playerAccount = await program.account.player.fetch(playerPDA);
+    const storagePDABalanceAfter =
+      await anchorProvider.connection.getAccountInfo(storagePDA);
 
     expect(playerAccount.identity.toBase58()).to.equal(
       user.publicKey.toBase58()
     );
     expect(playerAccount.rating.toNumber()).to.equal(rating.toNumber());
+
+    const lamportsBefore = storagePDABalanceBefore?.lamports || 0;
+    const lamportsAfter = storagePDABalanceAfter?.lamports || 0;
+
+    expect(lamportsBefore + FEE_LAMPORTS).to.equal(lamportsAfter);
   });
 
-  it('Can make a single payout', async () => {
+  it.skip('Can make a single payout', async () => {
     const { placement, kills } = generateRandomGameResult();
 
-    const playerAccountBefore = await program.account.player.fetch(player);
+    const playerAccountBefore = await program.account.player.fetch(playerPDA);
 
     await program.methods
-      .payout(placement, kills)
+      .calculateReward(placement, kills, playerBump, new anchor.BN(0))
       .accounts({
         reward: reward.publicKey,
-        player
+        player: playerPDA
       })
       .signers([])
       .rpc();
 
-    const playerAccountAfter = await program.account.player.fetch(player);
+    const playerAccountAfter = await program.account.player.fetch(playerPDA);
 
     const rewardMock = calculateInitialRewardParams(PLASMA_DECIMALS);
     const { rewardAmount, ratingChange } = calculatePlayerPayout(
@@ -249,12 +313,9 @@ describe('Membrane', () => {
     ).to.be.equal(playerAccountAfter.rating.toNumber());
   });
 
-  it.skip('User can claim a reward', async () => {
+  it('User can claim a reward', async () => {
     const user = anchorProvider.wallet;
-
-    const playerAccountBefore = await program.account.player.fetch(player);
-
-    console.log('Available to claim', playerAccountBefore.claimable.toString());
+    const playerAccountBefore = await program.account.player.fetch(playerPDA);
 
     const storageTokenBalanceBefore =
       await anchorProvider.connection.getTokenAccountBalance(
@@ -271,93 +332,29 @@ describe('Membrane', () => {
         userTokenAccount.address
       );
 
-    console.log({
-      playerAccountBefore,
-      storageTokenBalanceBefore,
-      userTokenAccount,
-      userTokenBalanceBefore
-    });
-
-    try {
-      await program.methods
-        .userApprove()
-        .accounts({
-          player,
-          user: user.publicKey,
-          authority: storage.publicKey,
-          vaultToken: storageTokenAddress,
-          playerToken: userTokenAccount.address,
-          mint: mintAddress,
-          tokenProgram: TOKEN_PROGRAM_ID
-        })
-        .signers([storage])
-        .rpc();
-    } catch (e) {
-      console.log('userApprove - ERROR');
-      throw e;
-    }
-
-    const userTokenAccountDelegated = await getOrCreateAssociatedTokenAccount(
-      anchorProvider.connection,
-      storage,
-      mintAddress,
-      user.publicKey
-    );
-
-    const storageTokenAccountDelegated =
-      await getOrCreateAssociatedTokenAccount(
-        anchorProvider.connection,
-        storage,
-        mintAddress,
-        storage.publicKey
-      );
-
-    console.log({
-      userTokenAccountDelegated,
-      storageTokenAccountDelegated
-    });
-
-    try {
-      await program.methods
-        .userClaim()
-        .accounts({
-          player,
-          user: user.publicKey,
-          authority: user.publicKey,
-          vaultToken: storageTokenAddress,
-          playerToken: userTokenAccount.address,
-          mint: mintAddress,
-          tokenProgram: TOKEN_PROGRAM_ID
-        })
-        .signers([]) // anchor will set user as a signer by default
-        .rpc();
-    } catch (e) {
-      console.log('userClaim - ERROR');
-      throw e;
-    }
+    await program.methods
+      .userClaim()
+      .accounts({
+        player: playerPDA,
+        user: user.publicKey,
+        authority: storagePDA,
+        vaultToken: storageTokenAddress,
+        playerToken: userTokenAccount.address,
+        mint: mintAddress,
+        tokenProgram: TOKEN_PROGRAM_ID
+      })
+      .signers([]) // anchor will set user as a signer by default
+      .rpc();
 
     const storageTokenBalanceAfter =
       await anchorProvider.connection.getTokenAccountBalance(
         storageTokenAddress
       );
-    const userTokenAccountAfter = await getOrCreateAssociatedTokenAccount(
-      anchorProvider.connection,
-      storage,
-      mintAddress,
-      user.publicKey
-    );
     const userTokenBalanceAfter =
       await anchorProvider.connection.getTokenAccountBalance(
         userTokenAccount.address
       );
-    const playerAccountAfter = await program.account.player.fetch(player);
-
-    console.log({
-      storageTokenBalanceAfter,
-      userTokenBalanceAfter,
-      userTokenAccountAfter,
-      playerAccountAfter
-    });
+    const playerAccountAfter = await program.account.player.fetch(playerPDA);
 
     expect(
       new anchor.BN(storageTokenBalanceAfter.value.amount).eq(
@@ -373,44 +370,55 @@ describe('Membrane', () => {
         )
       )
     ).to.be.true;
+    expect(playerAccountAfter.claimable.eq(new anchor.BN(0))).to.be.true;
   });
 
-  it.skip('User can sell the token', async () => {
+  it('User can sell the token', async () => {
+    const user = anchorProvider.wallet;
     const amountToSell = new anchor.BN(adjustSupply(10, PLASMA_DECIMALS));
 
-    // Send some tokens to the player
-    await sendToken(
+    // Mint some tokens to the user
+
+    // Get the token account of the toWallet address, and if it does not exist, create it
+    const userTokenAccount = await getOrCreateAssociatedTokenAccount(
       anchorProvider.connection,
-      mintAddress,
       storage,
-      player,
-      amountToSell.toNumber()
+      mintAddress,
+      user.publicKey
     );
+
+    // Make mint
+    await program.methods
+      .mintToken(amountToSell)
+      .accounts({
+        mint: mintAddress,
+        tokenAccount: userTokenAccount.address,
+        authority: storagePDA,
+        tokenProgram: TOKEN_PROGRAM_ID
+      })
+      .signers([])
+      .rpc();
 
     const storageTokenBalanceBefore =
       await anchorProvider.connection.getTokenAccountBalance(
         storageTokenAddress
       );
-    const playerTokenAddress = await findAssociatedTokenAddress(
-      player,
-      mintAddress
-    );
     const playerTokenBalanceBefore =
       await anchorProvider.connection.getTokenAccountBalance(
-        playerTokenAddress
+        userTokenAccount.address
       );
 
     await program.methods
       .userSell(amountToSell)
       .accounts({
-        player: player,
+        player: user.publicKey,
         mint: mintAddress,
         vaultToken: storageTokenAddress,
-        playerToken: playerTokenAddress,
+        playerToken: userTokenAccount.address,
         tokenProgram: TOKEN_PROGRAM_ID,
-        authority: storage.publicKey
+        authority: storagePDA
       })
-      .signers([storage])
+      .signers([])
       .rpc();
 
     const storageTokenBalanceAfter =
@@ -419,7 +427,7 @@ describe('Membrane', () => {
       );
     const playerTokenBalanceAfter =
       await anchorProvider.connection.getTokenAccountBalance(
-        playerTokenAddress
+        userTokenAccount.address
       );
 
     expect(
@@ -435,5 +443,88 @@ describe('Membrane', () => {
         new anchor.BN(playerTokenBalanceBefore.value.amount).sub(amountToSell)
       )
     ).to.be.true;
+  });
+
+  it('Can return the authority back to the storage', async () => {
+    const mintInfoBefore = await getMint(
+      anchorProvider.connection,
+      mintAddress
+    );
+    const tokenAccountBefore = await getAccount(
+      anchorProvider.connection,
+      storageTokenAddress
+    );
+    const storagePDABalanceBefore =
+      await anchorProvider.connection.getAccountInfo(storagePDA);
+    const storageBalanceBefore =
+      await anchorProvider.connection.getAccountInfo(storage.publicKey);
+    const storagePDALamportsBefore = storagePDABalanceBefore?.lamports || 0;
+    const storageLamportsBefore = storageBalanceBefore?.lamports || 0;
+
+    expect(mintInfoBefore.mintAuthority.toBase58()).to.equal(
+      storagePDA.toBase58()
+    );
+    expect(tokenAccountBefore.owner.toBase58()).to.equal(storagePDA.toBase58());
+
+    await program.methods
+      .returnAuthority()
+      .accounts({
+        storage: storage.publicKey,
+        mint: mintAddress,
+        storageTokenAccount: storageTokenAddress,
+        pda: storagePDA,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram
+      })
+      .signers([])
+      .rpc();
+
+    const mintInfoAfter = await getMint(anchorProvider.connection, mintAddress);
+    const tokenAccountAfter = await getAccount(
+      anchorProvider.connection,
+      storageTokenAddress
+    );
+    const storagePDABalanceAfter =
+      await anchorProvider.connection.getAccountInfo(storagePDA);
+    const storageBalanceAfter =
+      await anchorProvider.connection.getAccountInfo(storage.publicKey);
+    const storagePDALamportsAfter = storagePDABalanceAfter?.lamports || 0;
+    const storageLamportsAfter = storageBalanceAfter?.lamports || 0;
+
+    expect(mintInfoAfter.mintAuthority.toBase58()).to.equal(
+      storage.publicKey.toBase58()
+    );
+    expect(tokenAccountAfter.owner.toBase58()).to.equal(
+      storage.publicKey.toBase58()
+    );
+    expect(storagePDALamportsAfter).to.equal(0);
+    expect(storageLamportsAfter).to.equal(storageLamportsBefore + storagePDALamportsBefore);
+  });
+
+  it('Can freeze the authority for mint', async () => {
+    const tokenAccountBefore = await getAccount(
+      anchorProvider.connection,
+      storageTokenAddress
+    );
+
+    expect(tokenAccountBefore.isFrozen).to.be.false;
+
+    await program.methods
+      .freezeStorage()
+      .accounts({
+        mint: mintAddress,
+        storage: storage.publicKey,
+        storageTokenAccount: storageTokenAddress,
+        tokenProgram: TOKEN_PROGRAM_ID
+      })
+      .signers([storage])
+      .rpc();
+
+    const tokenAccountAfter = await getAccount(
+      anchorProvider.connection,
+      storageTokenAddress
+    );
+
+    expect(tokenAccountAfter.isFrozen).to.be.true;
   });
 });
