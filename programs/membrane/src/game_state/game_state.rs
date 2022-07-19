@@ -35,26 +35,26 @@ pub fn end_game(ctx: Context<EndGame>, _epoch: u64, identifier: u64, _bump_playe
 #[derive(Accounts)]
 #[instruction(identifier: u64)]
 pub struct StartGame<'info> {
-    #[account(init, seeds = [b"game".as_ref(), identifier.to_string().as_bytes()], bump, payer = pda, space = 10000)] //space will be calculated later
+    #[account(init, seeds = [b"game".as_ref(), identifier.to_string().as_bytes()], bump, payer = storage, space = 10000)] //space will be calculated later
     pub game: Account<'info, GameStart>,
     /// CHECK: SAFE PROGRAM OWNED ACCOUNT
     #[account(mut)]
-    pub pda: SystemAccount<'info>,
+    pub storage: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 #[instruction(epoch: u64, bump_players: u8, identifier: u64)]
 pub struct EndGame<'info> {
-    #[account(mut, seeds = [b"game".as_ref(), identifier.to_string().as_bytes()], bump, close = pda)]
+    #[account(mut, seeds = [b"game".as_ref(), identifier.to_string().as_bytes()], bump, close = storage)]
     pub game: Account<'info, GameStart>,
     /// CHECK: SAFE PROGRAM OWNED ACCOUNT
     #[account(mut)]
-    pub pda: AccountInfo<'info>,
-    #[account(init_if_needed, seeds = [b"epoch".as_ref(), epoch.to_string().as_bytes()], bump, payer = pda, space = 10485760)] //max space
+    pub storage: Signer<'info>,
+    #[account(init_if_needed, seeds = [b"epoch".as_ref(), epoch.to_string().as_bytes()], bump, payer = storage, space = 10485760)] //max space
     pub history: Account<'info, History>,
     pub system_program: Program<'info, System>,
-    #[account(mut, seeds = [b"players".as_ref(), identifier.to_string().as_bytes()], bump, close = pda)]
+    #[account(mut, seeds = [b"players".as_ref(), identifier.to_string().as_bytes()], bump, close = storage)]
     pub players_stats: Account<'info, super::PlayersStats>,
     //pub players_acc: Vec<Account<'info, player_state::Player>>,
 }

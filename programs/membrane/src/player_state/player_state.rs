@@ -6,10 +6,10 @@ use crate::constants::FEE_LAMPORTS;
 pub fn create_player(ctx: Context<InitializePlayer>, rating: Option<i64>) -> Result<()> {
     
     invoke(
-        &system_instruction::transfer(ctx.accounts.user.key, ctx.accounts.authority.key, FEE_LAMPORTS),
+        &system_instruction::transfer(ctx.accounts.user.key, ctx.accounts.storage.key, FEE_LAMPORTS),
         &[
             ctx.accounts.user.to_account_info(),
-            ctx.accounts.authority.to_account_info(),
+            ctx.accounts.storage.to_account_info(),
             ctx.accounts.system_program.to_account_info(),
         ],
     )?;
@@ -42,6 +42,9 @@ pub struct InitializePlayer<'info> {
     /// CHECK: SAFE PROGRAM OWNED ACCOUNT
     #[account(mut)]
     pub authority: AccountInfo<'info>, //PDA
+    /// CHECK: SAFE OWNED BY TEAM
+    #[account(mut)]
+    pub storage: AccountInfo<'info>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,

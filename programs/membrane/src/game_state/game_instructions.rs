@@ -16,7 +16,7 @@ pub fn initialize_reward(ctx: Context<maths::InitializeReward>) -> Result<()> {
 }
 
 
-pub fn calculate_values(_ctx: Context<RewardValues>, stats: Vec<IndStats>) -> Result<()> {
+pub fn calculate_values(_ctx: Context<RewardValues>, stats: Vec<IndStats>, percentage: f64, games: u64, league: f64) -> Result<()> { //TODO implement league calculations
     
     #[derive(Default)]
     struct Counter {
@@ -40,11 +40,12 @@ pub fn calculate_values(_ctx: Context<RewardValues>, stats: Vec<IndStats>) -> Re
         counter.kills_count = counter.kills_count + kills;
     }
     
-    let _vic_prob = counter.vic_count as f64 / (1000.0 * stats.len() as f64);
-    let _top_five_prob = counter.top_five_count as f64 / (1000.0 * stats.len() as f64);
-    let _top_ten_prob = counter.top_ten_count as f64 / (1000.0 * stats.len() as f64);
-    let _kills_prob = counter.kills_count as f64 / (1000.0 * stats.len() as f64);
+    let vic_prob = counter.vic_count as f64 / (1000.0 * stats.len() as f64);
+    let top_five_prob = counter.top_five_count as f64 / (1000.0 * stats.len() as f64);
+    let top_ten_prob = counter.top_ten_count as f64 / (1000.0 * stats.len() as f64);
+    let kills_prob = counter.kills_count as f64 / (1000.0 * stats.len() as f64);
 
+    let _multiplier = (games as f64 * league)* (0.25 * top_five_prob + 0.1 * top_ten_prob + vic_prob + 0.0467 * kills_prob) / (percentage); 
 
     Ok(())
 }
@@ -279,11 +280,11 @@ pub struct Stats { //(32 + 1 + 1 + 4 + 8) * 32 = 1472
 #[derive(Accounts)]
 pub struct SingleReward<'info> {
     pub player: Account<'info, player_state::Player>,
-    #[account(init_if_needed, payer = pda, space = 10000)]
+    #[account(init_if_needed, payer = storage, space = 10000)]
     pub stats: Account<'info, AccumulatedStatistics>,
     /// CHECK: SAFE PROGRAM OWNED ACCOUNT
-    #[account(mut, signer)]
-    pub pda: AccountInfo<'info>,
+    #[account(mut)]
+    pub storage: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 

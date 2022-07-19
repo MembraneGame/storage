@@ -31,8 +31,7 @@ pub fn transfer_authority(ctx: Context<TransferAuthority>) -> Result<()> {
     };
     let cpi_program = ctx.accounts.token_program.to_account_info();
     let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-
-    let (pda_authority, _bump) = Pubkey::find_program_address(&[VAULT_PDA_SEED], ctx.program_id);    
+    
     token::set_authority(cpi_ctx, spl_token::instruction::AuthorityType::FreezeAccount, Some(pda_authority))?;
 
     Ok(())
