@@ -3,11 +3,11 @@ use anchor_lang::prelude::*;
 // use crate::player_state;
 // use crate::errors;
 // use crate::maths;
-pub use crate::constants;
+pub use crate::constants::VAULT_PDA_SEED;
 // use crate::constants::VAULT_PDA_SEED;
 use super::Stats;
 
-pub fn start_game(ctx: Context<StartGame>, _identifier: u64) -> Result<()> {
+pub fn start_game(ctx: Context<StartGame>, _identifier: u64, _bump: u8) -> Result<()> {
     let game = &mut ctx.accounts.game;
     game.timestamp = Clock::get().unwrap().unix_timestamp;
 
@@ -33,13 +33,13 @@ pub fn end_game(ctx: Context<EndGame>, _epoch: u64, identifier: u64, _bump_playe
 
 
 #[derive(Accounts)]
-#[instruction(identifier: u64)]
+#[instruction(identifier: u64, bump: u8)]
 pub struct StartGame<'info> {
     #[account(init, seeds = [b"game".as_ref(), identifier.to_string().as_bytes()], bump, payer = pda, space = 10000)] //space will be calculated later
     pub game: Account<'info, GameStart>,
     /// CHECK: SAFE PROGRAM OWNED ACCOUNT
-    #[account(mut, signer)]
-    pub pda: AccountInfo<'info>,
+    #[account(mut)]
+    pub pda: SystemAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
