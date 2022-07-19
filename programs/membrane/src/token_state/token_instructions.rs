@@ -1,5 +1,5 @@
 use anchor_lang::{prelude::*, solana_program::{program::invoke_signed, system_instruction}};
-use anchor_spl::token::{self, MintTo, Burn, Transfer, SetAuthority, FreezeAccount, CloseAccount};
+use anchor_spl::token::{self, MintTo, Burn, Transfer, SetAuthority, FreezeAccount};
 use super::{MintToken, SellAndBurn, TransferAuthority, FreezeStorage, ReturnAuthority};
 use crate::constants::*;
 pub use spl_token;
