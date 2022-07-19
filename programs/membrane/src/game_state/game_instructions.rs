@@ -142,7 +142,7 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
     };
     
     let stats = &mut ctx.accounts.players_stats;
-    stats.players.push(stat);
+    stats.players.push(placement);
     
 
 
@@ -265,9 +265,14 @@ pub struct RewardValues<'info> {
     pub user: Signer<'info>,
 }
 
+// #[account]
+// pub struct PlayersStats {
+//     pub players: Vec<Stats>, //4 + 1472
+// }
+
 #[account]
 pub struct PlayersStats {
-    pub players: Vec<Stats>, //4 + 1472
+    pub players: Vec<u64>, //4 + 1472
 }
 
 #[derive(AnchorDeserialize, AnchorSerialize, Clone)]
