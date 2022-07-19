@@ -29,7 +29,7 @@ export const initializeMint = async (
     connection,
     storage,
     storage.publicKey,
-    null,
+    storage.publicKey,
     PLASMA_DECIMALS
   );
 
