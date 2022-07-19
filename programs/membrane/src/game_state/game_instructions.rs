@@ -72,7 +72,7 @@ pub fn calculate_values_single(ctx: Context<SingleReward>) -> Result<()> { //2 -
 }
 
 //Fn to calculate reward at the end of the game and update player account
-pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u64, _bump: u8, _identifier: u64) -> Result<()> {
+pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u64, _identifier: u64) -> Result<()> {
     let player = &mut ctx.accounts.player;
     let rating_multiplier:u64 = match player.rating { //match rating_multiplier
         Some(0..=100) => 8, //values not final
@@ -128,20 +128,23 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
     let kill_reward = kills * reward_account.kill; //calculate total reward for kills
     let reward = (rating_multiplier * (placement_reward + kill_reward))/10; //calculate total reward
     player.claimable = player.claimable + reward;
+    // let game = &ctx.accounts.game;
+
+    
     
     //make trait later
     let stat = Stats {
         id: player.identity,
         placement: placement as u8,
         kills: kills as u8,
-        survival_duration: 10, //change later not implemented yet
+        // survival_duration: game.timestamp, //change later not implemented yet
         reward: reward,
     };
     
     let stats = &mut ctx.accounts.players_stats;
     stats.players.push(stat);
     
-    //let game = &mut ctx.accounts.game;
+
 
     Ok(())
 }
@@ -229,8 +232,8 @@ pub struct CalculateReward<'info> {
         pub reward: Account<'info, maths::Reward>,
         #[account(mut)]
         player: Account<'info, player_state::Player>,
-        #[account(seeds = [b"game".as_ref(), identifier.to_string().as_bytes()], bump = bump)]
-        pub game: Account<'info, super::GameStart>,
+        // #[account(seeds = [b"game".as_ref(), identifier.to_string().as_bytes()], bump = bump)]
+        // pub game: Account<'info, super::GameStart>,
         /// CHECK: SAFE PROGRAM OWNED ACCOUNT
         #[account(mut)]
         pub storage: Signer<'info>,
@@ -273,7 +276,7 @@ pub struct Stats { //(32 + 1 + 1 + 4 + 8) * 32 = 1472
     pub id: Pubkey, //32
     pub placement: u8, //1
     pub kills: u8, //1
-    pub survival_duration: u32, //4
+    // pub survival_duration: u32, //4
     pub reward: u64, //8
 }
 
