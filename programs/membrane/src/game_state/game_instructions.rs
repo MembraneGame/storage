@@ -226,15 +226,12 @@ pub fn user_claim(ctx: Context<UserClaim>) -> Result<()> {
 }
 
 #[derive(Accounts)]
-#[instruction(identifier: u64)]
+#[instruction(placement: u64, kills: u64, identifier: u64)]
 pub struct CalculateReward<'info> {
         #[account(mut)]
         pub reward: Account<'info, maths::Reward>,
         #[account(mut)]
         player: Account<'info, player_state::Player>,
-        // #[account(seeds = [b"game".as_ref(), identifier.to_string().as_bytes()], bump = bump)]
-        // pub game: Account<'info, super::GameStart>,
-        /// CHECK: SAFE PROGRAM OWNED ACCOUNT
         #[account(mut)]
         pub storage: Signer<'info>,
         #[account(init_if_needed, seeds = [b"players".as_ref(), identifier.to_string().as_bytes()], bump, payer = storage, space = 10000)]
@@ -270,8 +267,8 @@ pub struct PlayersStats {
     pub players: Vec<Stats>, //4 + 1472
 }
 
-#[derive(AnchorDeserialize, AnchorSerialize, Clone)]
-pub struct Stats { //(32 + 1 + 1 + 4 + 8) * 32 = 1472
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy)]
+pub struct Stats { //(32 + 1 + 1 + 8) * 32 = 1472
     pub id: Pubkey, //32
     pub placement: u8, //1
     pub kills: u8, //1

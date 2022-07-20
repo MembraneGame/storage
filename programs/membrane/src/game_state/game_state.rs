@@ -3,8 +3,7 @@ use anchor_lang::prelude::*;
 // use crate::player_state;
 // use crate::errors;
 // use crate::maths;
-pub use crate::constants::VAULT_PDA_SEED;
-// use crate::constants::VAULT_PDA_SEED;
+pub use crate::constants::*;
 use super::Stats;
 
 pub fn start_game(ctx: Context<StartGame>, _identifier: u64) -> Result<()> {
@@ -44,14 +43,14 @@ pub struct StartGame<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(epoch: u64, bump_players: u8, identifier: u64)]
+#[instruction(epoch: u64, identifier: u64, bump_players: u8)]
 pub struct EndGame<'info> {
     #[account(mut, seeds = [b"game".as_ref(), identifier.to_string().as_bytes()], bump, close = storage)]
     pub game: Account<'info, GameStart>,
     /// CHECK: SAFE PROGRAM OWNED ACCOUNT
     #[account(mut)]
     pub storage: Signer<'info>,
-    #[account(init_if_needed, seeds = [b"epoch".as_ref(), epoch.to_string().as_bytes()], bump, payer = storage, space = 10485760)] //max space
+    #[account(init_if_needed, seeds = [b"epoch".as_ref(), epoch.to_string().as_bytes()], bump, payer = storage, space = MAX_ACCOUNT_SIZE)] //max space
     pub history: Account<'info, History>,
     pub system_program: Program<'info, System>,
     #[account(mut, seeds = [b"players".as_ref(), identifier.to_string().as_bytes()], bump, close = storage)]
