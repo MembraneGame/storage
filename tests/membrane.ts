@@ -321,6 +321,7 @@ describe('Membrane', () => {
         player: playerPDA,
         playersStats: playersStatsPDA,
         storage: storage.publicKey,
+        systemProgram
       })
       .signers([storage])
       .rpc();
