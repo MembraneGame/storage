@@ -20,7 +20,7 @@ pub const SEC_IN_DAY: i64 = 86400; //seconds in day to calculate current day fro
 
 //Player account
 pub const MAX_PLAYER_SIZE: usize = FLOAT_MAX + (1+FLOAT_MAX) + DISCRIMINATOR + FLOAT_MAX + PUBKEY_MAX + 5*FLOAT_MAX; //u64 + rating wrapped in some + discriminator for Player account + claimable i64 + pubkey
-
+pub const MAX_ACCOUNT_SIZE: usize = 10485760;
 
 //PDA SEEDS
 pub const VAULT_PDA_SEED: &[u8] = b"vault";
