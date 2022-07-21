@@ -20,7 +20,6 @@ impl Reward {
 pub struct InitializeReward<'info> {
     #[account(init, payer = payer, space = constants::MAX_SIZE_REWARD)]
     pub reward: Account<'info, Reward>,
-    #[account(init, payer = payer, space = 5000)] //change space after all qualities are added
     pub nft_multiplier: Account<'info, QualityMultiplier>,
     #[account(mut)]
     pub payer: Signer<'info>,
