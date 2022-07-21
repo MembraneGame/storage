@@ -17,6 +17,10 @@ pub mod membrane {
 
     use super::*;
 
+    pub fn initialize_nft_multiplier(ctx: Context<InitializeMultiplier>) -> Result<()> {
+        game_state::initialize_nft_multiplier(ctx)
+    }
+
     pub fn initialize_reward(ctx: Context<InitializeReward>) -> Result<()> {
         game_state::initialize_reward(ctx)
     }

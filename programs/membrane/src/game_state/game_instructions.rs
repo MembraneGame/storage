@@ -6,10 +6,16 @@ use crate::maths;
 pub use crate::constants;
 use crate::constants::VAULT_PDA_SEED;
 
+pub fn initialize_nft_multiplier(ctx: Context<InitializeMultiplier>) -> Result<()> {
+    let nft_multipler = &mut ctx.accounts.nft_multiplier;
+    nft_multipler.common = constants::VICTORY; //value at the beginning of the game when no user statistics is available
+    
+    Ok(())
+}
+
 pub fn initialize_reward(ctx: Context<maths::InitializeReward>) -> Result<()> {
     let reward_account = &mut ctx.accounts.reward;
     let nft_multipler = &mut ctx.accounts.nft_multiplier;
-    nft_multipler.common = constants::VICTORY;
 
     reward_account.days = 0; //set days to 0
     reward_account.calculate_reward(nft_multipler.common);
@@ -170,6 +176,15 @@ pub fn user_claim(ctx: Context<UserClaim>) -> Result<()> {
     // token::revoke(cpi_ctx)?;
     
     Ok(())
+}
+
+#[derive(Accounts)]
+pub struct InitializeMultiplier<'info> {
+        #[account(init, payer = payer, space = 5000)] //change space after all qualities are added
+        pub nft_multiplier: Account<'info, maths::QualityMultiplier>,
+        #[account(mut)]
+        pub payer: Signer<'info>,
+        pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
