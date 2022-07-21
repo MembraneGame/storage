@@ -5,71 +5,18 @@ use crate::errors;
 use crate::maths;
 pub use crate::constants;
 use crate::constants::VAULT_PDA_SEED;
-use player_state::IndStats;
 
 pub fn initialize_reward(ctx: Context<maths::InitializeReward>) -> Result<()> {
     let reward_account = &mut ctx.accounts.reward;
+    let nft_multipler = &mut ctx.accounts.nft_multiplier;
+    nft_multipler.common = constants::VICTORY;
+
     reward_account.days = 0; //set days to 0
-    reward_account.calculate_reward(16800000000);
+    reward_account.calculate_reward(nft_multipler.common);
 
     Ok(())
 }
 
-
-pub fn calculate_values(_ctx: Context<RewardValues>, stats: Vec<IndStats>, percentage: f64, games: u64, league: f64) -> Result<()> { //TODO implement league calculations
-    
-    #[derive(Default)]
-    struct Counter {
-        vic_count: u64,
-        top_five_count: u64,
-        top_ten_count: u64,
-        kills_count: u64,
-    }
-
-    let mut counter: Counter  = Default::default();
-
-    for c in &stats {
-        let vic = c.wins * 1000 / c.games;
-        let top_five = c.top_five * 1000 / c.games ;
-        let top_ten = c.top_ten * 1000 / c.games ;
-        let kills = c.kills * 1000 / c.games ;
-
-        counter.vic_count = counter.vic_count + vic;
-        counter.top_five_count = counter.top_five_count + top_five;
-        counter.top_ten_count = counter.top_ten_count + top_ten;
-        counter.kills_count = counter.kills_count + kills;
-    }
-    
-    let vic_prob = counter.vic_count as f64 / (1000.0 * stats.len() as f64);
-    let top_five_prob = counter.top_five_count as f64 / (1000.0 * stats.len() as f64);
-    let top_ten_prob = counter.top_ten_count as f64 / (1000.0 * stats.len() as f64);
-    let kills_prob = counter.kills_count as f64 / (1000.0 * stats.len() as f64);
-
-    let _multiplier = (games as f64 * league)* (0.25 * top_five_prob + 0.1 * top_ten_prob + vic_prob + 0.0467 * kills_prob) / (percentage); 
-
-    Ok(())
-}
-
-pub fn calculate_values_single(ctx: Context<SingleReward>) -> Result<()> { //2 - 100, 2 - 101
-    let player = &mut ctx.accounts.player;
-
-    let vic = player.stats.wins as f64 / player.stats.games as f64;
-    let top_five = player.stats.top_five as f64/ player.stats.games as f64;
-    let top_ten = player.stats.top_ten as f64/ player.stats.games as f64;
-    let kills = player.stats.kills as f64/ player.stats.games as f64;
-    
-    let accumulated = &mut ctx.accounts.stats;
-
-    accumulated.accum_vic += vic;
-    accumulated.accum_top_five += top_five;
-    accumulated.accum_top_ten += top_ten;
-    accumulated.accum_kills += kills;
-    accumulated.counter += 1;
-
-    //TODO: add rating league for easier calculation of the avg stats
-
-    Ok(())
-}
 
 //Fn to calculate reward at the end of the game and update player account
 pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u64, _identifier: u64) -> Result<()> {
@@ -86,7 +33,7 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
     let unix_now = Clock::get().unwrap().unix_timestamp; //current time to compare
 
     if ((unix_now - constants::START)/constants::SEC_IN_DAY) != reward_account.days { //if statement to check whether next day has begun
-        reward_account.calculate_reward(16800000000); //Calculate and update the reward account
+        reward_account.calculate_reward(constants::VICTORY); //Calculate and update the reward account
         reward_account.reload()?; //update the reward account if new day begun
         reward_account.days = (unix_now - constants::START)/constants::SEC_IN_DAY;
     }
@@ -256,12 +203,6 @@ pub struct UserClaim<'info> {
         pub token_program: Program<'info, Token>,
 }
 
-#[derive(Accounts)]
-pub struct RewardValues<'info> {
-    #[account(mut)]
-    pub user: Signer<'info>,
-}
-
 #[account]
 pub struct PlayersStats {
     pub players: Vec<Stats>, //4 + 1472
@@ -274,25 +215,4 @@ pub struct Stats { //(32 + 1 + 1 + 8) * 32 = 1472
     pub kills: u8, //1
     // pub survival_duration: u32, //4
     pub reward: u64, //8
-}
-
-#[derive(Accounts)]
-pub struct SingleReward<'info> {
-    pub player: Account<'info, player_state::Player>,
-    #[account(init_if_needed, payer = storage, space = 10000)]
-    pub stats: Account<'info, AccumulatedStatistics>,
-    /// CHECK: SAFE PROGRAM OWNED ACCOUNT
-    #[account(mut)]
-    pub storage: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[account]
-#[derive(Default)]
-pub struct AccumulatedStatistics {
-    pub accum_vic: f64,
-    pub accum_top_five: f64,
-    pub accum_top_ten: f64,
-    pub accum_kills: f64,
-    pub counter: u64,
 }
