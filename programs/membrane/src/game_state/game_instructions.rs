@@ -10,7 +10,7 @@ use player_state::IndStats;
 pub fn initialize_reward(ctx: Context<maths::InitializeReward>) -> Result<()> {
     let reward_account = &mut ctx.accounts.reward;
     reward_account.days = 0; //set days to 0
-    reward_account.calculate_reward();
+    reward_account.calculate_reward(16800000000);
 
     Ok(())
 }
@@ -86,7 +86,7 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
     let unix_now = Clock::get().unwrap().unix_timestamp; //current time to compare
 
     if ((unix_now - constants::START)/constants::SEC_IN_DAY) != reward_account.days { //if statement to check whether next day has begun
-        reward_account.calculate_reward(); //Calculate and update the reward account
+        reward_account.calculate_reward(16800000000); //Calculate and update the reward account
         reward_account.reload()?; //update the reward account if new day begun
         reward_account.days = (unix_now - constants::START)/constants::SEC_IN_DAY;
     }
