@@ -43,6 +43,7 @@ describe('Membrane', () => {
   let storage: Keypair;
   let storagePDA: PublicKey; // storage account PDA
   let reward: Keypair;
+  let nftMultiplier: Keypair;
   let mintAddress: PublicKey;
   let storageTokenAddress: PublicKey;
   let player: PublicKey;
@@ -222,11 +223,23 @@ describe('Membrane', () => {
   it('Can initialize a reward', async () => {
     // Generate reward account
     reward = Keypair.generate();
+    nftMultiplier = Keypair.generate();
+
+    await program.methods
+      .initializeNftMultiplier()
+      .accounts({
+        nftMultiplier: nftMultiplier.publicKey,
+        payer: storage.publicKey,
+        systemProgram
+      })
+      .signers([storage, nftMultiplier])
+      .rpc();
 
     await program.methods
       .initializeReward()
       .accounts({
         reward: reward.publicKey,
+        nftMultiplier: nftMultiplier.publicKey,
         payer: storage.publicKey,
         systemProgram
       })
@@ -235,13 +248,6 @@ describe('Membrane', () => {
 
     // Initial reward
     const rewardAccount = await program.account.reward.fetch(reward.publicKey);
-
-    console.log('rewardAccount', {
-      victory: rewardAccount.victory.toNumber(),
-      topFive: rewardAccount.topFive.toNumber(),
-      topTen: rewardAccount.topTen.toNumber(),
-      kill: rewardAccount.kill.toNumber()
-    });
 
     // Example result
     // {
@@ -255,13 +261,6 @@ describe('Membrane', () => {
       NFT_GRADE_MULTIPLIERS.COMMON,
       PLASMA_DECIMALS
     );
-
-    console.log('rewardMock', {
-      victory: rewardMock.victory.toNumber(),
-      topFive: rewardMock.topFive.toNumber(),
-      topTen: rewardMock.topTen.toNumber(),
-      kill: rewardMock.kill.toNumber()
-    });
 
     for (const key in rewardMock) {
       const result = rewardAccount[key];
@@ -325,6 +324,7 @@ describe('Membrane', () => {
   it('Can make a single payout', async () => {
     const user = anchorProvider.wallet;
     const { placement, kills } = generateRandomGameResult();
+    
     // Generate game account PDA
     const [playersStatsPDA, playersStatsBump] =
       await anchor.web3.PublicKey.findProgramAddress(
@@ -332,11 +332,7 @@ describe('Membrane', () => {
         program.programId
       );
 
-    console.log({ placement: placement.toNumber(), kills: kills.toNumber() });
-
     const playerAccountBefore = await program.account.player.fetch(playerPDA);
-
-    console.log({ playerAccountBefore });
 
     await program.methods
       .calculateReward(placement, kills, identifier)
@@ -355,9 +351,6 @@ describe('Membrane', () => {
     const playersStatsAccountAfter = await program.account.playersStats.fetch(
       playersStatsPDA
     );
-
-    console.log({ playerAccountAfter });
-    console.log(playersStatsAccountAfter.players);
 
     const rewardMock = calculateInitialRewardParams(
       NFT_GRADE_MULTIPLIERS.COMMON,
