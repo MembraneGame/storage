@@ -7,7 +7,7 @@ import {
   getOrCreateAssociatedTokenAccount,
   TOKEN_PROGRAM_ID
 } from '@solana/spl-token';
-import { Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey } from '@solana/web3.js';
 import { Membrane } from '../target/types/membrane';
 import {
   adjustSupply,
@@ -19,12 +19,12 @@ import {
   calculateInitialRewardParams,
   calculatePlayerPayout,
   generateRandomGameResult,
-  initializeMint
+  initializeMint,
+  Stat
 } from './utils/mocks';
 import {
   FEE_LAMPORTS,
-  MAX_PLAYER_SIZE,
-  MAX_SIZE_REWARD,
+  NFT_GRADE_MULTIPLIERS,
   PLASMA_DECIMALS,
   PLASMA_INITIAL_SUPPLY,
   VAULT_PDA_SEED
@@ -236,6 +236,13 @@ describe('Membrane', () => {
     // Initial reward
     const rewardAccount = await program.account.reward.fetch(reward.publicKey);
 
+    console.log('rewardAccount', {
+      victory: rewardAccount.victory.toNumber(),
+      topFive: rewardAccount.topFive.toNumber(),
+      topTen: rewardAccount.topTen.toNumber(),
+      kill: rewardAccount.kill.toNumber()
+    });
+
     // Example result
     // {
     //   victory: 8926864892,
@@ -244,7 +251,17 @@ describe('Membrane', () => {
     //   kill: 1249761085
     // }
 
-    const rewardMock = calculateInitialRewardParams(PLASMA_DECIMALS);
+    const rewardMock = calculateInitialRewardParams(
+      NFT_GRADE_MULTIPLIERS.COMMON,
+      PLASMA_DECIMALS
+    );
+
+    console.log('rewardMock', {
+      victory: rewardMock.victory.toNumber(),
+      topFive: rewardMock.topFive.toNumber(),
+      topTen: rewardMock.topTen.toNumber(),
+      kill: rewardMock.kill.toNumber()
+    });
 
     for (const key in rewardMock) {
       const result = rewardAccount[key];
@@ -257,8 +274,9 @@ describe('Membrane', () => {
     const user = anchorProvider.wallet;
     const rating = new anchor.BN(0);
 
-    const storageBalanceBefore =
-      await anchorProvider.connection.getAccountInfo(storage.publicKey);
+    const storageBalanceBefore = await anchorProvider.connection.getAccountInfo(
+      storage.publicKey
+    );
 
     await program.methods
       .initializePlayer(rating)
@@ -273,8 +291,9 @@ describe('Membrane', () => {
       .rpc();
 
     const playerAccount = await program.account.player.fetch(playerPDA);
-    const storageBalanceAfter =
-      await anchorProvider.connection.getAccountInfo(storage.publicKey);
+    const storageBalanceAfter = await anchorProvider.connection.getAccountInfo(
+      storage.publicKey
+    );
 
     expect(playerAccount?.identity.toBase58()).to.equal(
       user.publicKey.toBase58()
@@ -304,6 +323,7 @@ describe('Membrane', () => {
   });
 
   it('Can make a single payout', async () => {
+    const user = anchorProvider.wallet;
     const { placement, kills } = generateRandomGameResult();
     // Generate game account PDA
     const [playersStatsPDA, playersStatsBump] =
@@ -312,7 +332,11 @@ describe('Membrane', () => {
         program.programId
       );
 
+    console.log({ placement: placement.toNumber(), kills: kills.toNumber() });
+
     const playerAccountBefore = await program.account.player.fetch(playerPDA);
+
+    console.log({ playerAccountBefore });
 
     await program.methods
       .calculateReward(placement, kills, identifier)
@@ -328,9 +352,17 @@ describe('Membrane', () => {
 
     const playerAccountAfter = await program.account.player.fetch(playerPDA);
 
-    console.log({ playerAccountAfter });
+    const playersStatsAccountAfter = await program.account.playersStats.fetch(
+      playersStatsPDA
+    );
 
-    const rewardMock = calculateInitialRewardParams(PLASMA_DECIMALS);
+    console.log({ playerAccountAfter });
+    console.log(playersStatsAccountAfter.players);
+
+    const rewardMock = calculateInitialRewardParams(
+      NFT_GRADE_MULTIPLIERS.COMMON,
+      PLASMA_DECIMALS
+    );
     const { rewardAmount, ratingChange } = calculatePlayerPayout(
       placement,
       kills,
@@ -343,6 +375,22 @@ describe('Membrane', () => {
       .lt(new anchor.BN(0))
       ? new anchor.BN(0)
       : ratingChange;
+
+    const stat = ((playersStatsAccountAfter?.players || []) as Stat[]).find(
+      (stat) => {
+        return stat.id.toBase58() === user.publicKey.toBase58();
+      }
+    );
+
+    expect(playersStatsAccountAfter?.players).to.be.an('array');
+    expect(stat).to.be.an('object');
+    expect(stat?.placement).to.be.equal(placement.toNumber());
+    expect(stat?.kills).to.be.equal(kills.toNumber());
+    expect(
+      stat?.reward.eq(
+        playerAccountAfter.claimable.sub(playerAccountBefore.claimable)
+      )
+    ).to.be.true;
 
     expect(
       playerAccountBefore.claimable
@@ -497,8 +545,9 @@ describe('Membrane', () => {
     );
     const storagePDABalanceBefore =
       await anchorProvider.connection.getAccountInfo(storagePDA);
-    const storageBalanceBefore =
-      await anchorProvider.connection.getAccountInfo(storage.publicKey);
+    const storageBalanceBefore = await anchorProvider.connection.getAccountInfo(
+      storage.publicKey
+    );
     const storagePDALamportsBefore = storagePDABalanceBefore?.lamports || 0;
     const storageLamportsBefore = storageBalanceBefore?.lamports || 0;
 
@@ -527,8 +576,9 @@ describe('Membrane', () => {
     );
     const storagePDABalanceAfter =
       await anchorProvider.connection.getAccountInfo(storagePDA);
-    const storageBalanceAfter =
-      await anchorProvider.connection.getAccountInfo(storage.publicKey);
+    const storageBalanceAfter = await anchorProvider.connection.getAccountInfo(
+      storage.publicKey
+    );
     const storagePDALamportsAfter = storagePDABalanceAfter?.lamports || 0;
     const storageLamportsAfter = storageBalanceAfter?.lamports || 0;
 
@@ -539,7 +589,9 @@ describe('Membrane', () => {
       storage.publicKey.toBase58()
     );
     expect(storagePDALamportsAfter).to.equal(0);
-    expect(storageLamportsAfter).to.equal(storageLamportsBefore + storagePDALamportsBefore);
+    expect(storageLamportsAfter).to.equal(
+      storageLamportsBefore + storagePDALamportsBefore
+    );
   });
 
   it('Can freeze the authority for mint', async () => {
