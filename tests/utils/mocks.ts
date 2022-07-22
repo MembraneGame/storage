@@ -3,18 +3,21 @@ import Decimal from 'decimal.js';
 import {
   DECIMAL_PLACES,
   EULER_NUMBER,
-  KILL,
   NFT_PRICE,
   PLASMA_DECIMALS,
   PLASMA_INITIAL_SUPPLY,
   SEC_IN_DAY,
-  START,
-  TOP_FIVE,
-  TOP_TEN,
-  VICTORY
+  START
 } from './constants';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { adjustSupply, createToken, mintToken } from './web3';
+
+export type Stat = {
+  id: PublicKey;
+  placement: number;
+  kills: number;
+  reward: BN;
+};
 
 export type MintResult = {
   mintAddress: PublicKey;
@@ -56,6 +59,7 @@ export type RewardParams = {
 };
 
 export const calculateInitialRewardParams = (
+  nftGradeMultiplier: number,
   decimals: number
 ): RewardParams => {
   // Use Decimal for operations with numbers
@@ -70,10 +74,10 @@ export const calculateInitialRewardParams = (
   const currentUsers = new Decimal(1); // Value is not final
   const initialUsers = new Decimal(1); // Value is not final
   const nftPrice = new Decimal(NFT_PRICE);
-  const victoryParam = new Decimal(VICTORY);
-  const topFiveParam = new Decimal(TOP_FIVE);
-  const topTenParam = new Decimal(TOP_TEN);
-  const killParam = new Decimal(KILL);
+  const victoryParam = new Decimal(1);
+  const topFiveParam = new Decimal(4);
+  const topTenParam = new Decimal(10);
+  const killParam = new Decimal(150);
 
   const unixNow = dateNow.divToInt(new Decimal(1000)); // Should be an integer
   const x = unixNow.sub(start).divToInt(secInDay); // Should be an integer
@@ -85,10 +89,10 @@ export const calculateInitialRewardParams = (
     .mul(new Decimal(10).pow(decimals))
     .toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN);
 
-  const victory = nftPrice.div(victoryParam).mul(multiplier);
-  const topFive = nftPrice.div(topFiveParam).mul(multiplier);
-  const topTen = nftPrice.div(topTenParam).mul(multiplier);
-  const kill = nftPrice.div(killParam).mul(multiplier);
+  const victory = nftPrice.div(victoryParam.mul(nftGradeMultiplier)).mul(multiplier);
+  const topFive = nftPrice.div(topFiveParam.mul(nftGradeMultiplier)).mul(multiplier);
+  const topTen = nftPrice.div(topTenParam.mul(nftGradeMultiplier)).mul(multiplier);
+  const kill = nftPrice.mul(7).div(killParam.mul(nftGradeMultiplier)).mul(multiplier);
 
   return {
     victory: new BN(

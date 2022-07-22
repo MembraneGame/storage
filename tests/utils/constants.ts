@@ -6,6 +6,9 @@ export const MEMBRANE_INITIAL_SUPPLY = 812_500_000;
 
 // Mocks
 export const DECIMAL_PLACES = 0;
+export const NFT_GRADE_MULTIPLIERS = {
+  COMMON: 16_800_000_000
+};
 
 // Copy from programs/membrane/src/constants.rs
 
@@ -25,10 +28,6 @@ export const MAX_SIZE_REWARD: number =
 
 export const NFT_PRICE: number = 150_000_000_000;
 export const EULER_NUMBER: number = 2.718_281_828;
-export const VICTORY: number = 16_800_000_000;
-export const TOP_FIVE: number = 67_200_000_000;
-export const TOP_TEN: number = 168_000_000_000;
-export const KILL: number = 120_000_000_000;
 export const FEE_LAMPORTS: number = 100_000_000;
 
 // UNIX values
