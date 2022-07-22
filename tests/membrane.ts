@@ -1,20 +1,11 @@
 import * as anchor from '@project-serum/anchor';
-import { Program } from '@project-serum/anchor';
+import {Program} from '@project-serum/anchor';
 import * as spl from '@solana/spl-token';
-import {
-  getAccount,
-  getMint,
-  getOrCreateAssociatedTokenAccount,
-  TOKEN_PROGRAM_ID
-} from '@solana/spl-token';
-import { Keypair, PublicKey } from '@solana/web3.js';
-import { Membrane } from '../target/types/membrane';
-import {
-  adjustSupply,
-  findAssociatedTokenAddress,
-  getAirdrop
-} from './utils/web3';
-import { expect } from 'chai';
+import {getAccount, getMint, getOrCreateAssociatedTokenAccount, TOKEN_PROGRAM_ID} from '@solana/spl-token';
+import {Keypair, PublicKey} from '@solana/web3.js';
+import {Membrane} from '../target/types/membrane';
+import {adjustSupply, findAssociatedTokenAddress, getAirdrop} from './utils/web3';
+import {expect} from 'chai';
 import {
   calculateInitialRewardParams,
   calculatePlayerPayout,
@@ -23,8 +14,10 @@ import {
   Stat
 } from './utils/mocks';
 import {
+  AVG_STATS_SAMPLE,
+  DEFAULT_NFT_MULTIPLIER,
   FEE_LAMPORTS,
-  NFT_GRADE_MULTIPLIERS,
+  NFT_STATS_SAMPLE,
   PLASMA_DECIMALS,
   PLASMA_INITIAL_SUPPLY,
   VAULT_PDA_SEED
@@ -235,11 +228,39 @@ describe('Membrane', () => {
       .signers([storage, nftMultiplier])
       .rpc();
 
-    const nftMultiplierAccount = await program.account.qualityMultiplier.fetch(nftMultiplier.publicKey);
+    const nftMultiplierAccountBeforeUpdate = await program.account.qualityMultiplier.fetch(nftMultiplier.publicKey);
 
-    expect(nftMultiplierAccount).to.be.an('object');
+    console.log({ nftMultiplierAccountBeforeUpdate });
+
+    expect(nftMultiplierAccountBeforeUpdate).to.be.an('object');
     // TODO: multiplier can be different than "common"
-    expect(nftMultiplierAccount?.common.toNumber()).to.be.equal(NFT_GRADE_MULTIPLIERS.COMMON);
+    expect(nftMultiplierAccountBeforeUpdate?.common.toNumber()).to.be.equal(DEFAULT_NFT_MULTIPLIER);
+
+    // await program.methods
+    //   .updateNftMultiplier(
+    //     // @ts-ignore
+    //     {
+    //       stats: {
+    //         league: AVG_STATS_SAMPLE.league,
+    //         victory: AVG_STATS_SAMPLE.victory,
+    //         top_five: AVG_STATS_SAMPLE.topFive,
+    //         top_ten: AVG_STATS_SAMPLE.topTen,
+    //         kills: AVG_STATS_SAMPLE.kills
+    //       },
+    //       payback: NFT_STATS_SAMPLE.COMMON.payback,
+    //       durability: NFT_STATS_SAMPLE.COMMON.durability
+    //     }
+    //   )
+    //   .accounts({
+    //     nftMultiplier: nftMultiplier.publicKey,
+    //     storage: storage.publicKey
+    //   })
+    //   .signers([storage])
+    //   .rpc();
+
+    const nftMultiplierAccountAfterUpdate = await program.account.qualityMultiplier.fetch(nftMultiplier.publicKey);
+
+    console.log({ nftMultiplierAccountAfterUpdate });
 
     await program.methods
       .initializeReward()
@@ -264,7 +285,7 @@ describe('Membrane', () => {
     // }
 
     const rewardMock = calculateInitialRewardParams(
-      nftMultiplierAccount.common.toNumber(),
+      nftMultiplierAccountAfterUpdate.common.toNumber(),
       PLASMA_DECIMALS
     );
 
@@ -346,6 +367,7 @@ describe('Membrane', () => {
         reward: reward.publicKey,
         player: playerPDA,
         playersStats: playersStatsPDA,
+        nftMultiplier: nftMultiplier.publicKey,
         storage: storage.publicKey,
         systemProgram
       })
@@ -358,8 +380,10 @@ describe('Membrane', () => {
       playersStatsPDA
     );
 
+    const nftMultiplierAccount = await program.account.qualityMultiplier.fetch(nftMultiplier.publicKey);
+
     const rewardMock = calculateInitialRewardParams(
-      NFT_GRADE_MULTIPLIERS.COMMON,
+      nftMultiplierAccount.common.toNumber(),
       PLASMA_DECIMALS
     );
     const { rewardAmount, ratingChange } = calculatePlayerPayout(

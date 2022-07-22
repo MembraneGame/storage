@@ -51,6 +51,50 @@ export const initializeMint = async (
   };
 };
 
+export type NftMultiplier = {
+  common: BN;
+}
+
+export type AvgStats = {
+  league: number; // average rating league multiplier
+  victory: number;
+  topFive: number;
+  topTen: number;
+  kills: number;
+}
+
+export const updateNftMultiplier = (
+  stats: AvgStats,
+  payback: number,
+  durability: number
+): NftMultiplier => {
+  const a = new Decimal(0.25);
+  const b = new Decimal(0.1);
+  const c = new Decimal(0.0467);
+  const d = new Decimal(10);
+  const exp = new Decimal(9);
+
+  const common = new Decimal(durability)
+    .mul(stats.league)
+    .mul(
+      a
+        .mul(stats.topFive)
+        .add(b.mul(stats.topTen))
+        .add(stats.victory)
+        .add(c.mul(stats.kills))
+    )
+    .div(payback)
+    .mul(d.pow(exp))
+    .toDecimalPlaces(0);
+
+  console.log({ common: common.toNumber() });
+  // (((durability as f64 * stats.league)* (0.25 * stats.top_five + 0.1 * stats.top_ten + stats.victory + 0.0467 * stats.kills) / (payback)) *10.0_f64.powf(9.0)) as u64;
+
+  return {
+    common: new BN(common.toNumber())
+  };
+};
+
 export type RewardParams = {
   victory: BN;
   topFive: BN;
