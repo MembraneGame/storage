@@ -23,6 +23,14 @@ pub fn initialize_reward(ctx: Context<maths::InitializeReward>) -> Result<()> {
     Ok(())
 }
 
+//payback is a multiplier of how much a user should receive upon fully exhausting the nft based on its quality (e.g 1.2 for common, 1.5 for epic, 2 for leg)
+pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, stats: AvgStats, payback: f64, durability: u64) -> Result<()> { //TODO: Change payback and durability from number to struct for each quality
+    let nft_multiplier = &mut ctx.accounts.nft_multiplier;
+
+    nft_multiplier.common = (((durability as f64 * stats.league)* (0.25 * stats.top_five + 0.1 * stats.top_ten + stats.victory + 0.0467 * stats.kills) / (payback)) *10.0_f64.powf(9.0)) as u64; 
+
+    Ok(())
+}
 
 //Fn to calculate reward at the end of the game and update player account
 pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u64, _identifier: u64) -> Result<()> {
@@ -35,11 +43,12 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
         _ => return Err(errors::ErrorCode::RatingOverflow.into()),
     };
     let reward_account = &mut ctx.accounts.reward; //define Reward account
+    let nft_multiplier = &mut ctx.accounts.nft_multiplier; 
     
     let unix_now = Clock::get().unwrap().unix_timestamp; //current time to compare
 
     if ((unix_now - constants::START)/constants::SEC_IN_DAY) != reward_account.days { //if statement to check whether next day has begun
-        reward_account.calculate_reward(constants::VICTORY); //Calculate and update the reward account
+        reward_account.calculate_reward(nft_multiplier.common); //Calculate and update the reward account //only common quality at the moment
         reward_account.reload()?; //update the reward account if new day begun
         reward_account.days = (unix_now - constants::START)/constants::SEC_IN_DAY;
     }
@@ -198,6 +207,7 @@ pub struct CalculateReward<'info> {
         pub storage: Signer<'info>,
         #[account(init_if_needed, seeds = [b"players".as_ref(), identifier.to_string().as_bytes()], bump, payer = storage, space = 10000)]
         pub players_stats: Account<'info, PlayersStats>,
+        pub nft_multiplier: Account<'info, maths::QualityMultiplier>,
         pub system_program: Program<'info, System>,
 }
 
@@ -230,4 +240,20 @@ pub struct Stats { //(32 + 1 + 1 + 8) * 32 = 1472
     pub kills: u8, //1
     // pub survival_duration: u32, //4
     pub reward: u64, //8
+}
+
+#[derive(Accounts)]
+pub struct UpdateMultiplier<'info> {
+    #[account(mut)]
+    pub nft_multiplier: Account<'info, maths::QualityMultiplier>,
+    #[account(mut)]
+    pub storage: Signer<'info>,
+}
+
+pub struct AvgStats { //shows the chance for placement and avg kills per game
+    pub league: f64, //average rating league multiplier
+    pub victory: f64, //1
+    pub top_five: f64, //2-5
+    pub top_ten: f64, //6-10
+    pub kills: f64,
 }
