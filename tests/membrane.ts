@@ -235,6 +235,12 @@ describe('Membrane', () => {
       .signers([storage, nftMultiplier])
       .rpc();
 
+    const nftMultiplierAccount = await program.account.qualityMultiplier.fetch(nftMultiplier.publicKey);
+
+    expect(nftMultiplierAccount).to.be.an('object');
+    // TODO: multiplier can be different than "common"
+    expect(nftMultiplierAccount?.common.toNumber()).to.be.equal(NFT_GRADE_MULTIPLIERS.COMMON);
+
     await program.methods
       .initializeReward()
       .accounts({
@@ -258,7 +264,7 @@ describe('Membrane', () => {
     // }
 
     const rewardMock = calculateInitialRewardParams(
-      NFT_GRADE_MULTIPLIERS.COMMON,
+      nftMultiplierAccount.common.toNumber(),
       PLASMA_DECIMALS
     );
 
@@ -324,7 +330,7 @@ describe('Membrane', () => {
   it('Can make a single payout', async () => {
     const user = anchorProvider.wallet;
     const { placement, kills } = generateRandomGameResult();
-    
+
     // Generate game account PDA
     const [playersStatsPDA, playersStatsBump] =
       await anchor.web3.PublicKey.findProgramAddress(
