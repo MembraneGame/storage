@@ -250,6 +250,7 @@ pub struct UpdateMultiplier<'info> {
     pub storage: Signer<'info>,
 }
 
+#[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy)]
 pub struct AvgStats { //shows the chance for placement and avg kills per game
     pub league: f64, //average rating league multiplier
     pub victory: f64, //1

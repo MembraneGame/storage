@@ -25,6 +25,10 @@ pub mod membrane {
         game_state::initialize_reward(ctx)
     }
 
+    pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, stats: AvgStats, payback: f64, durability: u64) -> Result<()> {
+        game_state::update_nft_multiplier(ctx, stats, payback, durability)
+    }
+
     pub fn start_game(ctx: Context<StartGame>, identifier: u64) -> Result<()> {
         game_state::start_game(ctx, identifier)
     }
