@@ -26,10 +26,8 @@ pub fn initialize_reward(ctx: Context<maths::InitializeReward>) -> Result<()> {
 //payback is a multiplier of how much a user should receive upon fully exhausting the nft based on its quality (e.g 1.2 for common, 1.5 for epic, 2 for leg)
 pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, stats: AvgStats, nfts: NftQualities) -> Result<()> { //TODO: Change payback and durability from number to struct for each quality
     let nft_multiplier = &mut ctx.accounts.nft_multiplier;
-    let common_durability = nfts.common.durability;
-    let common_payback = nfts.common.payback;
 
-    nft_multiplier.common = (((common_durability as f64 * stats.league)* (0.25 * stats.top_five + 0.1 * stats.top_ten + stats.victory + 0.0467 * stats.kills) / (common_payback)) *10.0_f64.powf(9.0)) as u64; 
+    nft_multiplier.common = (((nfts.common.durability as f64 * stats.league)* (0.25 * stats.top_five + 0.1 * stats.top_ten + stats.victory + 0.0467 * stats.kills) / (nfts.common.payback)) *10.0_f64.powf(9.0)) as u64; 
 
     Ok(())
 }
