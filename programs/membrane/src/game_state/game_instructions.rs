@@ -24,10 +24,10 @@ pub fn initialize_reward(ctx: Context<maths::InitializeReward>) -> Result<()> {
 }
 
 //payback is a multiplier of how much a user should receive upon fully exhausting the nft based on its quality (e.g 1.2 for common, 1.5 for epic, 2 for leg)
-pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, stats: AvgStats, payback: f64, durability: u64) -> Result<()> { //TODO: Change payback and durability from number to struct for each quality
+pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, stats: AvgStats, nfts: NftQualities) -> Result<()> { //TODO: Change payback and durability from number to struct for each quality
     let nft_multiplier = &mut ctx.accounts.nft_multiplier;
 
-    nft_multiplier.common = (((durability as f64 * stats.league)* (0.25 * stats.top_five + 0.1 * stats.top_ten + stats.victory + 0.0467 * stats.kills) / (payback)) *10.0_f64.powf(9.0)) as u64; 
+    nft_multiplier.common = (((nfts.common.durability as f64 * stats.league)* (0.25 * stats.top_five + 0.1 * stats.top_ten + stats.victory + 0.0467 * stats.kills) / (nfts.common.payback)) *10.0_f64.powf(9.0)) as u64; 
 
     Ok(())
 }
@@ -265,4 +265,16 @@ pub struct AvgStats { //shows the chance for placement and avg kills per game
     pub top_five: f64, //2-5
     pub top_ten: f64, //6-10
     pub kills: f64,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, AnchorSerialize, AnchorDeserialize)]
+pub struct NftQualities {
+    pub common: NftStats,
+    //add other qualities
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, AnchorSerialize, AnchorDeserialize)]
+pub struct NftStats {
+    pub durability: u64,
+    pub payback: f64,
 }
