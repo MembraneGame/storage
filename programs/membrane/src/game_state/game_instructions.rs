@@ -30,7 +30,7 @@ pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, stats: AvgStats, nf
     msg!("nfts: {:?}", nfts);
     let step1 = (nfts.common.durability as f64 * stats.league);
     msg!("Step 1: {}", step1);
-    let step2 = (0.25 * stats.top_five + 0.1 * stats.top_ten + stats.victory + 0.0467 * stats.kills);
+    let step2 = (0.25 * stats.topfive + 0.1 * stats.topten + stats.victory + 0.0467 * stats.kills);
     msg!("Step 2: {}", step2);
     let step3 = step1 * step2;
     msg!("Step 3: {}", step3);
@@ -40,7 +40,7 @@ pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, stats: AvgStats, nf
     msg!("Final answer: {}", answer);
 
 
-    nft_multiplier.common = (((nfts.common.durability as f64 * stats.league)* (0.25 * stats.top_five + 0.1 * stats.top_ten + stats.victory + 0.0467 * stats.kills) / (nfts.common.payback)) *10.0_f64.powf(9.0)) as u64; 
+    nft_multiplier.common = (((nfts.common.durability as f64 * stats.league)* (0.25 * stats.topfive + 0.1 * stats.topten + stats.victory + 0.0467 * stats.kills) / (nfts.common.payback)) *10.0_f64.powf(9.0)) as u64; 
 
     Ok(())
 }
@@ -275,8 +275,8 @@ pub struct UpdateMultiplier<'info> {
 pub struct AvgStats { //shows the chance for placement and avg kills per game
     pub league: f64, //average rating league multiplier
     pub victory: f64, //1
-    pub top_five: f64, //2-5
-    pub top_ten: f64, //6-10
+    pub topfive: f64, //2-5
+    pub topten: f64, //6-10
     pub kills: f64,
 }
 
