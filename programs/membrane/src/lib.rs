@@ -29,8 +29,8 @@ pub mod membrane {
     //     game_state::update_nft_multiplier(ctx, victory, top_five, top_ten, kills, league, payback, durability)
     // }
 
-    pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, stats: AvgStats, payback: f64, durability: u64) -> Result<()> {
-        game_state::update_nft_multiplier(ctx, stats, payback, durability)
+    pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, stats: AvgStats, nfts: NftQualities) -> Result<()> {
+        game_state::update_nft_multiplier(ctx, stats, nfts)
     }
 
     pub fn start_game(ctx: Context<StartGame>, identifier: u64) -> Result<()> {
