@@ -42,6 +42,7 @@ pub struct StartGame<'info> {
     pub system_program: Program<'info, System>,
 }
 
+
 #[derive(Accounts)]
 #[instruction(epoch: u64, identifier: u64, bump_players: u8)]
 pub struct EndGame<'info> {
@@ -51,7 +52,7 @@ pub struct EndGame<'info> {
     #[account(mut)]
     pub storage: Signer<'info>,
     #[account(init_if_needed, seeds = [b"epoch".as_ref(), epoch.to_string().as_bytes()], bump, payer = storage, space = MAX_ACCOUNT_SIZE)] //max space
-    pub history: Account<'info, History>,
+    pub history: Box<Account<'info, History>>,
     pub system_program: Program<'info, System>,
     #[account(mut, seeds = [b"players".as_ref(), identifier.to_string().as_bytes()], bump, close = storage)]
     pub players_stats: Account<'info, super::PlayersStats>,
