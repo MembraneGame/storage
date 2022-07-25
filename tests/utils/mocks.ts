@@ -53,20 +53,25 @@ export const initializeMint = async (
 
 export type NftMultiplier = {
   common: BN;
-}
+};
 
 export type AvgStats = {
   league: number; // average rating league multiplier
   victory: number;
-  topFive: number;
-  topTen: number;
+  topfive: number;
+  topten: number;
   kills: number;
-}
+};
+export type NftGrade = 'common';
+export type NftQuality = {
+  durability: BN;
+  payback: number;
+};
+export type NftQualities = Record<NftGrade, NftQuality>;
 
 export const updateNftMultiplier = (
   stats: AvgStats,
-  payback: number,
-  durability: number
+  nftQualities: NftQualities
 ): NftMultiplier => {
   const a = new Decimal(0.25);
   const b = new Decimal(0.1);
@@ -74,25 +79,27 @@ export const updateNftMultiplier = (
   const d = new Decimal(10);
   const exp = new Decimal(9);
 
-  const common = new Decimal(durability)
-    .mul(stats.league)
-    .mul(
-      a
-        .mul(stats.topFive)
-        .add(b.mul(stats.topTen))
-        .add(stats.victory)
-        .add(c.mul(stats.kills))
-    )
-    .div(payback)
-    .mul(d.pow(exp))
-    .toDecimalPlaces(0);
+  const result = {} as NftMultiplier;
 
-  console.log({ common: common.toNumber() });
-  // (((durability as f64 * stats.league)* (0.25 * stats.top_five + 0.1 * stats.top_ten + stats.victory + 0.0467 * stats.kills) / (payback)) *10.0_f64.powf(9.0)) as u64;
+  for (const qualityKey in nftQualities) {
+    const quality = nftQualities[qualityKey];
+    const multiplier = new Decimal(quality.durability.toNumber())
+      .mul(stats.league)
+      .mul(
+        a
+          .mul(stats.topfive)
+          .add(b.mul(stats.topten))
+          .add(stats.victory)
+          .add(c.mul(stats.kills))
+      )
+      .div(quality.payback)
+      .mul(d.pow(exp))
+      .toDecimalPlaces(0);
 
-  return {
-    common: new BN(common.toNumber())
-  };
+    result[qualityKey] = new BN(multiplier.toNumber());
+  }
+
+  return result;
 };
 
 export type RewardParams = {
@@ -133,10 +140,19 @@ export const calculateInitialRewardParams = (
     .mul(new Decimal(10).pow(decimals))
     .toDecimalPlaces(DECIMAL_PLACES, Decimal.ROUND_DOWN);
 
-  const victory = nftPrice.div(victoryParam.mul(nftGradeMultiplier)).mul(multiplier);
-  const topFive = nftPrice.div(topFiveParam.mul(nftGradeMultiplier)).mul(multiplier);
-  const topTen = nftPrice.div(topTenParam.mul(nftGradeMultiplier)).mul(multiplier);
-  const kill = nftPrice.mul(7).div(killParam.mul(nftGradeMultiplier)).mul(multiplier);
+  const victory = nftPrice
+    .div(victoryParam.mul(nftGradeMultiplier))
+    .mul(multiplier);
+  const topFive = nftPrice
+    .div(topFiveParam.mul(nftGradeMultiplier))
+    .mul(multiplier);
+  const topTen = nftPrice
+    .div(topTenParam.mul(nftGradeMultiplier))
+    .mul(multiplier);
+  const kill = nftPrice
+    .mul(7)
+    .div(killParam.mul(nftGradeMultiplier))
+    .mul(multiplier);
 
   return {
     victory: new BN(

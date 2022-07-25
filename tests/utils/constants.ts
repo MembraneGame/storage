@@ -1,3 +1,5 @@
+import { BN } from '@project-serum/anchor';
+
 // Token
 
 export const PLASMA_DECIMALS = 9;
@@ -7,18 +9,20 @@ export const MEMBRANE_INITIAL_SUPPLY = 812_500_000;
 
 // Mocks
 export const DECIMAL_PLACES = 0;
-export const DEFAULT_NFT_MULTIPLIER = 16_800_000_000;
+export const DEFAULT_NFT_MULTIPLIER = {
+  common: 16_800_000_000
+};
 export const AVG_STATS_SAMPLE = {
   league: 0.56,
   victory: 0.048,
-  topFive: 0.478,
-  topTen: 0.478,
-  kills: 0.478
+  topfive: 0.478,
+  topten: 0.478,
+  kills: 0.86
 };
 export const NFT_STATS_SAMPLE = {
-  COMMON: {
-    payback: 1.25,
-    durability: 150
+  common: {
+    durability: new BN(150),
+    payback: 1.25
   }
 }
 
