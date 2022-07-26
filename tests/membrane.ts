@@ -223,9 +223,8 @@ describe('Membrane', () => {
     ).to.be.true;
   });
 
-  it('Can initialize a reward', async () => {
-    // Generate reward account
-    reward = Keypair.generate();
+  it('Can initialize the NFT multiplier', async () => {
+    // Generate nftMultiplier account
     nftMultiplier = Keypair.generate();
 
     await program.methods
@@ -248,7 +247,9 @@ describe('Membrane', () => {
       const mock = DEFAULT_NFT_MULTIPLIER[key];
       expect(multiplier?.toNumber()).to.be.equal(mock);
     }
+  });
 
+  it('Can update the NFT multiplier', async () => {
     await program.methods
       .updateNftMultiplier(
         // @ts-ignore
@@ -275,6 +276,11 @@ describe('Membrane', () => {
       const mock = nftMultiplierMock[key];
       expect(multiplier?.eq(mock)).to.be.true;
     }
+  });
+
+  it('Can initialize a reward', async () => {
+    // Generate reward account
+    reward = Keypair.generate();
 
     await program.methods
       .initializeReward()
@@ -298,8 +304,11 @@ describe('Membrane', () => {
     //   kill: 1249761085
     // }
 
+    const nftMultiplierAccount =
+      await program.account.qualityMultiplier.fetch(nftMultiplier.publicKey);
+
     const rewardMock = calculateInitialRewardParams(
-      nftMultiplierAccountAfterUpdate.common.toNumber(),
+      nftMultiplierAccount.common.toNumber(),
       PLASMA_DECIMALS
     );
 
