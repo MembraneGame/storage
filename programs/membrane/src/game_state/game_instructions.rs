@@ -113,10 +113,10 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
         // survival_duration: game.timestamp, //change later not implemented yet
         reward: reward,
     };
-    
     let stats = &mut ctx.accounts.players_stats;
-    stats.players.push(stat);
-    
+    let counter = stats.counter; //value declared explicitly to avoid null pointer
+    stats.players[counter] = stat;
+    stats.counter += 1;
 
 
     Ok(())
@@ -241,10 +241,11 @@ pub struct UserClaim<'info> {
 
 #[account]
 pub struct PlayersStats {
-    pub players: Vec<Stats>, //4 + 1472
+    pub players: [Stats; 32], //4 + 1472
+    pub counter: usize, //1
 }
 
-#[derive(AnchorDeserialize, AnchorSerialize, Clone, Copy)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, AnchorSerialize, AnchorDeserialize)]
 pub struct Stats { //(32 + 1 + 1 + 8) * 32 = 1472
     pub id: Pubkey, //32
     pub placement: u8, //1

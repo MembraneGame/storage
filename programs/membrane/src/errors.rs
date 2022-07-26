@@ -6,4 +6,6 @@ pub enum ErrorCode {
     RatingUndefined,
     #[msg("The player's rating overflows")]
     RatingOverflow,
+    #[msg("History account overflow")]
+    HistoryOverflow
 }
