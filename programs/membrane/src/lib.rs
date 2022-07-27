@@ -28,6 +28,9 @@ pub mod membrane {
     pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, stats: AvgStats, nfts: NftQualities) -> Result<()> {
         game_state::update_nft_multiplier(ctx, stats, nfts)
     }
+    pub fn create_history_account(ctx: Context<CreateHistory>) -> Result<()> { 
+        game_state::create_history_account(ctx)
+    }
 
     pub fn start_game(ctx: Context<StartGame>, identifier: u64) -> Result<()> {
         game_state::start_game(ctx, identifier)
