@@ -25,7 +25,7 @@ pub fn create_history_account(_ctx: Context<CreateHistory>) -> Result<()> {
 pub fn end_game(ctx: Context<EndGame>, identifier: u64) -> Result<()> {
     let history = &mut ctx.accounts.history.load_mut()?;
     let stats = &mut ctx.accounts.players_stats.load_mut()?;
-    let counter = history.counter; //value declared explicitly to avoid null pointer
+    let counter = history.counter as usize; //value declared explicitly to avoid null pointer
     let unix = Clock::get().unwrap().unix_timestamp;
     let duration = unix - ctx.accounts.game.timestamp;
 
@@ -91,7 +91,7 @@ pub struct CreatePlayerStats<'info> {
 #[account(zero_copy)]
 pub struct History { //one game is 1492 bytes // 7028 games for accout size overflow (per epoch)
     pub games: [Game; 7000], //1492 + 4
-    pub counter: usize,
+    pub counter: u64,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, AnchorSerialize, AnchorDeserialize)]
