@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 // use anchor_spl::token::{self, Token, Mint, TokenAccount, Transfer, Approve};
 // use crate::player_state;
-// use crate::errors;
+use crate::errors;
 // use crate::maths;
 pub use crate::constants::*;
 use super::{Stats, PlayersStats};
@@ -35,10 +35,14 @@ pub fn end_game(ctx: Context<EndGame>, identifier: u64) -> Result<()> {
         player_stats: stats.players.clone(),
     };
     
+    if counter > 6999 {
+        return Err(errors::ErrorCode::HistoryOverflow.into())
+    }
+    
     history.games[counter] = game;
     history.counter += 1;
 
-    if counter == 7000 {
+    if counter == 7000 { 
         history.timestamp = unix;
     }
     
