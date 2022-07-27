@@ -51,6 +51,7 @@ describe('Membrane', () => {
   let storageTokenAddress: PublicKey;
   let player: PublicKey;
   let playerPDA: PublicKey; // player account PDA
+  let playersStats: Keypair;
   let playerBump: number;
   let gamePDA: PublicKey;
   let gameBump: number;
@@ -374,33 +375,51 @@ describe('Membrane', () => {
   it('Can make a single payout', async () => {
     const user = anchorProvider.wallet;
     const { placement, kills } = generateRandomGameResult();
+    // Generate players stats account
+    playersStats = Keypair.generate();
 
-    // Generate game account PDA
-    const [playersStatsPDA, playersStatsBump] =
-      await anchor.web3.PublicKey.findProgramAddress(
-        [Buffer.from('players'), Buffer.from(identifier.toString())],
-        program.programId
-      );
+    try {
+      await program.methods
+        .createPlayerStats()
+        .accounts({
+          playerStats: playersStats.publicKey
+        })
+        .preInstructions([
+          await program.account.playersStats.createInstruction(playersStats)
+        ])
+        .signers([playersStats])
+        .rpc();
+    } catch (e) {
+      console.error(e);
+    }
+
+    const playersStatsAccount = await program.account.playersStats.fetch(playersStats.publicKey);
+    
+    console.log(playersStatsAccount);
 
     const playerAccountBefore = await program.account.player.fetch(playerPDA);
 
-    await program.methods
-      .calculateReward(placement, kills, identifier)
-      .accounts({
-        reward: reward.publicKey,
-        player: playerPDA,
-        playersStats: playersStatsPDA,
-        nftMultiplier: nftMultiplier.publicKey,
-        storage: storage.publicKey,
-        systemProgram
-      })
-      .signers([storage])
-      .rpc();
+    try {
+      await program.methods
+        .calculateReward(placement, kills, identifier)
+        .accounts({
+          reward: reward.publicKey,
+          player: playerPDA,
+          playersStats: playersStats.publicKey,
+          nftMultiplier: nftMultiplier.publicKey,
+          storage: storage.publicKey,
+          systemProgram
+        })
+        .signers([storage])
+        .rpc();
+    } catch (e) {
+      console.error(e);
+    }
 
     const playerAccountAfter = await program.account.player.fetch(playerPDA);
 
     const playersStatsAccountAfter = await program.account.playersStats.fetch(
-      playersStatsPDA
+      playersStats.publicKey
     );
 
     const nftMultiplierAccount = await program.account.qualityMultiplier.fetch(
@@ -448,6 +467,35 @@ describe('Membrane', () => {
     expect(
       playerAccountBefore.rating.add(safeRatingChange).toNumber()
     ).to.be.equal(playerAccountAfter.rating.toNumber());
+  });
+
+  it.skip('Can end the game', async () => {
+    // Generate history account
+    const history = Keypair.generate();
+
+    await program.methods
+      .createHistoryAccount()
+      .accounts({
+        history: history.publicKey
+      })
+      .signers([storage])
+      .rpc();
+
+    await program.methods
+      .endGame(identifier)
+      .accounts({
+        game: gamePDA,
+        history: history.publicKey,
+        playersStats: playersStats.publicKey,
+        storage: storage.publicKey,
+        systemProgram
+      })
+      .signers([storage])
+      .rpc();
+
+    const gameAccount = await program.account.gameStart.fetch(gamePDA);
+
+    expect(gameAccount?.timestamp.toNumber()).to.be.a('number');
   });
 
   it('User can claim a reward', async () => {
