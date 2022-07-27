@@ -35,14 +35,6 @@ pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, stats: AvgStats, nf
     Ok(())
 }
 
-// pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, victory: f64, top_five: f64, top_ten: f64, kills: f64, league: f64, payback: f64, durability: f64) -> Result<()> {
-//     let nft_multiplier = &mut ctx.accounts.nft_multiplier;
-    
-//     nft_multiplier.common = (((durability as f64 * league)* (0.25 * top_five + 0.1 * top_ten + victory + 0.0467 * kills) / (payback)) *10.0_f64.powf(9.0)) as u64; 
-
-//     Ok(())
-// }
-
 //Fn to calculate reward at the end of the game and update player account
 pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u64, _identifier: u64) -> Result<()> {
     let player = &mut ctx.accounts.player;
