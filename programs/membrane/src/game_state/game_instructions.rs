@@ -104,7 +104,7 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
         reward: reward,
     };
     let stats = &mut ctx.accounts.players_stats.load_mut()?;
-    let counter = stats.counter; //value declared explicitly to avoid null pointer
+    let counter = stats.counter as usize; //value declared explicitly to avoid null pointer
     stats.players[counter] = stat;
     stats.counter += 1;
 
@@ -232,7 +232,7 @@ pub struct UserClaim<'info> {
 #[account(zero_copy)]
 pub struct PlayersStats {
     pub players: [Stats; 32], //4 + 1472
-    pub counter: usize, //1
+    pub counter: u64, //1
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, AnchorSerialize, AnchorDeserialize)]
