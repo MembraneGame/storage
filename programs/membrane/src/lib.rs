@@ -37,9 +37,13 @@ pub mod membrane {
         game_state::start_game(ctx, identifier)
     }
 
-    // pub fn end_game(ctx: Context<EndGame>, epoch: u64, identifier: u64, bump_players : u8) -> Result<()> {
-    //     game_state::end_game(ctx, epoch, identifier, bump_players)
-    // }
+    pub fn create_player_stats(ctx: Context<CreatePlayerStats>) -> Result<()> {
+        game_state::create_player_stats(ctx)
+    }
+
+    pub fn end_game(ctx: Context<EndGame>, identifier: u64) -> Result<()> {
+        game_state::end_game(ctx, identifier)
+    }
 
     pub fn transfer_authority(ctx: Context<TransferAuthority>) -> Result<()> { //transfer authority to mint tokens to PDA
         token_state::transfer_authority(ctx)

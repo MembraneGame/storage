@@ -102,8 +102,6 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
     let reward = (rating_multiplier * (placement_reward + kill_reward))/10; //calculate total reward
     player.claimable = player.claimable + reward;
     // let game = &ctx.accounts.game;
-
-    
     
     //make trait later
     let stat = Stats {
@@ -113,7 +111,7 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
         // survival_duration: game.timestamp, //change later not implemented yet
         reward: reward,
     };
-    let stats = &mut ctx.accounts.players_stats;
+    let stats = &mut ctx.accounts.players_stats.load_mut()?;
     let counter = stats.counter; //value declared explicitly to avoid null pointer
     stats.players[counter] = stat;
     stats.counter += 1;
@@ -216,8 +214,8 @@ pub struct CalculateReward<'info> {
         player: Account<'info, player_state::Player>,
         #[account(mut)]
         pub storage: Signer<'info>,
-        #[account(init_if_needed, seeds = [b"players".as_ref(), identifier.to_string().as_bytes()], bump, payer = storage, space = 10000)]
-        pub players_stats: Account<'info, PlayersStats>,
+        #[account(mut)]
+        pub players_stats: AccountLoader<'info, PlayersStats>,
         pub nft_multiplier: Account<'info, maths::QualityMultiplier>,
         pub system_program: Program<'info, System>,
 }
@@ -239,7 +237,7 @@ pub struct UserClaim<'info> {
         pub token_program: Program<'info, Token>,
 }
 
-#[account]
+#[account(zero_copy)]
 pub struct PlayersStats {
     pub players: [Stats; 32], //4 + 1472
     pub counter: usize, //1

@@ -4,7 +4,7 @@ use anchor_lang::prelude::*;
 use crate::errors;
 // use crate::maths;
 pub use crate::constants::*;
-use super::Stats;
+use super::{Stats, PlayersStats};
 
 pub fn start_game(ctx: Context<StartGame>, _identifier: u64) -> Result<()> {
     let game = &mut ctx.accounts.game;
@@ -13,13 +13,18 @@ pub fn start_game(ctx: Context<StartGame>, _identifier: u64) -> Result<()> {
     Ok(())
 }
 
+pub fn create_player_stats(_ctx: Context<CreatePlayerStats>) -> Result<()> {
+    Ok(())
+}
+
 pub fn create_history_account(_ctx: Context<CreateHistory>) -> Result<()> {    
     Ok(())
 }
 
 
-pub fn end_game(ctx: Context<EndGame>, _epoch: u64, identifier: u64, _bump_players : u8) -> Result<()> {
+pub fn end_game(ctx: Context<EndGame>, identifier: u64) -> Result<()> {
     let history = &mut ctx.accounts.history.load_mut()?;
+    let stats = &mut ctx.accounts.players_stats.load_mut()?;
     let counter = history.counter; //value declared explicitly to avoid null pointer
     let unix = Clock::get().unwrap().unix_timestamp;
     let duration = unix - ctx.accounts.game.timestamp;
@@ -27,7 +32,7 @@ pub fn end_game(ctx: Context<EndGame>, _epoch: u64, identifier: u64, _bump_playe
     let game = Game {
         identifier: identifier,
         duration: duration as u64,
-        player_stats: ctx.accounts.players_stats.players.clone(),
+        player_stats: stats.players.clone(),
     };
 
     if counter > 7000 {
@@ -54,7 +59,7 @@ pub struct StartGame<'info> {
 
 
 #[derive(Accounts)]
-#[instruction(epoch: u64, identifier: u64, bump_players: u8)]
+#[instruction(identifier: u64)]
 pub struct EndGame<'info> {
     #[account(mut, seeds = [b"game".as_ref(), identifier.to_string().as_bytes()], bump, close = storage)]
     pub game: Account<'info, GameStart>,
@@ -64,8 +69,8 @@ pub struct EndGame<'info> {
     #[account(mut)]
     history: AccountLoader<'info, History>,
     pub system_program: Program<'info, System>,
-    #[account(mut, seeds = [b"players".as_ref(), identifier.to_string().as_bytes()], bump, close = storage)]
-    pub players_stats: Account<'info, super::PlayersStats>,
+    #[account(mut, close = storage)]
+    pub players_stats: AccountLoader<'info, PlayersStats>,
     //pub players_acc: Vec<Account<'info, player_state::Player>>,
 }
 
@@ -73,6 +78,12 @@ pub struct EndGame<'info> {
 pub struct CreateHistory<'info> {
     #[account(zero)]
     history: AccountLoader<'info, History>,
+}
+
+#[derive(Accounts)]
+pub struct CreatePlayerStats<'info> {
+    #[account(zero)]
+    player_stats: AccountLoader<'info, PlayersStats>,
 }
 
 
