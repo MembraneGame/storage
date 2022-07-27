@@ -42,9 +42,6 @@ pub fn end_game(ctx: Context<EndGame>, identifier: u64) -> Result<()> {
     history.games[counter] = game;
     history.counter += 1;
 
-    if counter == 7000 { 
-        history.timestamp = unix;
-    }
     
     Ok(())
 }
@@ -94,7 +91,6 @@ pub struct CreatePlayerStats<'info> {
 #[account(zero_copy)]
 pub struct History { //one game is 1492 bytes // 7028 games for accout size overflow (per epoch)
     pub games: [Game; 7000], //1492 + 4
-    pub timestamp: i64,
     pub counter: usize,
 }
 
