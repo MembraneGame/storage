@@ -25,10 +25,6 @@ pub mod membrane {
         game_state::initialize_reward(ctx)
     }
 
-    // pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, victory: f64, top_five: f64, top_ten: f64, kills: f64, league: f64, payback: f64, durability: f64) -> Result<()> {
-    //     game_state::update_nft_multiplier(ctx, victory, top_five, top_ten, kills, league, payback, durability)
-    // }
-
     pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, stats: AvgStats, nfts: NftQualities) -> Result<()> {
         game_state::update_nft_multiplier(ctx, stats, nfts)
     }

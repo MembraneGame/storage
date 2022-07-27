@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 // use anchor_spl::token::{self, Token, Mint, TokenAccount, Transfer, Approve};
 // use crate::player_state;
-use crate::errors;
+// use crate::errors;
 // use crate::maths;
 pub use crate::constants::*;
 use super::{Stats, PlayersStats};
@@ -34,13 +34,13 @@ pub fn end_game(ctx: Context<EndGame>, identifier: u64) -> Result<()> {
         duration: duration as u64,
         player_stats: stats.players.clone(),
     };
-
-    if counter > 7000 {
-        return Err(errors::ErrorCode::HistoryOverflow.into())
-    }
     
     history.games[counter] = game;
     history.counter += 1;
+
+    if counter == 7000 {
+        history.timestamp = unix;
+    }
     
     Ok(())
 }
@@ -90,6 +90,7 @@ pub struct CreatePlayerStats<'info> {
 #[account(zero_copy)]
 pub struct History { //one game is 1492 bytes // 7028 games for accout size overflow (per epoch)
     pub games: [Game; 7000], //1492 + 4
+    pub timestamp: i64,
     pub counter: usize,
 }
 
