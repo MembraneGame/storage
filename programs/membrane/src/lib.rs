@@ -32,17 +32,17 @@ pub mod membrane {
         game_state::create_history_account(ctx)
     }
 
-    pub fn start_game(ctx: Context<StartGame>, identifier: u64) -> Result<()> {
-        game_state::start_game(ctx, identifier)
-    }
+    // pub fn start_game(ctx: Context<StartGame>, identifier: u64) -> Result<()> {
+    //     game_state::start_game(ctx, identifier)
+    // }
 
-    pub fn create_player_stats(ctx: Context<CreatePlayerStats>) -> Result<()> {
-        game_state::create_player_stats(ctx)
-    }
+    // pub fn create_player_stats(ctx: Context<CreatePlayerStats>) -> Result<()> {
+    //     game_state::create_player_stats(ctx)
+    // }
 
-    pub fn end_game(ctx: Context<EndGame>, identifier: u64) -> Result<()> {
-        game_state::end_game(ctx, identifier)
-    }
+    // pub fn end_game(ctx: Context<EndGame>, identifier: u64) -> Result<()> {
+    //     game_state::end_game(ctx, identifier)
+    // }
 
     pub fn transfer_authority(ctx: Context<TransferAuthority>) -> Result<()> { //transfer authority to mint tokens to PDA
         token_state::transfer_authority(ctx)
