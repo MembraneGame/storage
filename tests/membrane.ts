@@ -444,10 +444,15 @@ describe('Membrane', () => {
       playersStats.publicKey
     );
 
-    console.log(playerAccountAfter.identity.toBase58());
     // console.log(user.publicKey.toBase58());
-    console.log(playersStatsAccountAfter.players[0].id.toBase58());
     console.log(playersStats.publicKey.toBase58(), playersStatsAccountAfter);
+    console.log('-------KEYS----------')
+    console.log('playersStats [0]', playersStatsAccountAfter.players[0].id.toBase58());
+    console.log('storage', storage.publicKey.toBase58());
+    console.log('user', user.publicKey.toBase58());
+    console.log('identity', playerAccountAfter.identity.toBase58());
+    console.log('player PDA', playerPDA.toBase58());
+    console.log('----------------------')
     console.log(playersStatsAccountInfo);
 
 
