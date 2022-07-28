@@ -103,6 +103,7 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
         // survival_duration: game.timestamp, //change later not implemented yet
         reward: reward,
     };
+    msg!("Stat: {:?}", stat);
     let stats = &mut ctx.accounts.players_stats.load_mut()?;
     msg!("Before: {}", stats.counter);
     // let counter = stats.counter as usize; //value declared explicitly to avoid null pointer
