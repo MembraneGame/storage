@@ -105,6 +105,7 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
     };
     msg!("Stat: {:?}", stat);
     let stats = &mut ctx.accounts.players_stats.load_mut()?;
+    msg!("PlayersStats pubkey: {}", ctx.accounts.players_stats.key());
     msg!("Before: {}", stats.counter);
     msg!("PlayersStats before: {:?}", stats.players[0]);
     // let counter = stats.counter as usize; //value declared explicitly to avoid null pointer
