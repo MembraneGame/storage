@@ -4,7 +4,7 @@ use anchor_lang::prelude::*;
 use crate::errors;
 // use crate::maths;
 pub use crate::constants::*;
-use super::{Stats, PlayersStats};
+use super::{Stats, PlayersStatsVec};
 
 pub fn start_game(ctx: Context<StartGame>, _identifier: u64) -> Result<()> {
     let game = &mut ctx.accounts.game;
@@ -22,29 +22,29 @@ pub fn create_history_account(_ctx: Context<CreateHistory>) -> Result<()> {
 }
 
 
-pub fn end_game(ctx: Context<EndGame>, identifier: u64) -> Result<()> {
-    let history = &mut ctx.accounts.history.load_mut()?;
-    let stats = &mut ctx.accounts.players_stats.load_mut()?;
-    let counter = history.counter as usize; //value declared explicitly to avoid null pointer
-    let unix = Clock::get().unwrap().unix_timestamp;
-    let duration = unix - ctx.accounts.game.timestamp;
+// pub fn end_game(ctx: Context<EndGame>, identifier: u64) -> Result<()> {
+//     let history = &mut ctx.accounts.history.load_mut()?;
+//     let stats = &mut ctx.accounts.players_stats.load_mut()?;
+//     let counter = history.counter as usize; //value declared explicitly to avoid null pointer
+//     let unix = Clock::get().unwrap().unix_timestamp;
+//     let duration = unix - ctx.accounts.game.timestamp;
 
-    let game = Game {
-        identifier: identifier,
-        duration: duration as u64,
-        player_stats: stats.players.clone(),
-    };
+//     let game = Game {
+//         identifier: identifier,
+//         duration: duration as u64,
+//         player_stats: stats.players.clone(),
+//     };
     
-    if counter > 6999 {
-        return Err(errors::ErrorCode::HistoryOverflow.into())
-    }
+//     if counter > 6999 {
+//         return Err(errors::ErrorCode::HistoryOverflow.into())
+//     }
     
-    history.games[counter] = game;
-    history.counter += 1;
+//     history.games[counter] = game;
+//     history.counter += 1;
 
     
-    Ok(())
-}
+//     Ok(())
+// }
 
 
 #[derive(Accounts)]
@@ -59,21 +59,21 @@ pub struct StartGame<'info> {
 }
 
 
-#[derive(Accounts)]
-#[instruction(identifier: u64)]
-pub struct EndGame<'info> {
-    #[account(mut, seeds = [b"game".as_ref(), identifier.to_string().as_bytes()], bump, close = storage)]
-    pub game: Account<'info, GameStart>,
-    /// CHECK: SAFE PROGRAM OWNED ACCOUNT
-    #[account(mut)]
-    pub storage: Signer<'info>,
-    #[account(mut)]
-    history: AccountLoader<'info, History>,
-    pub system_program: Program<'info, System>,
-    #[account(mut, close = storage)]
-    pub players_stats: AccountLoader<'info, PlayersStats>,
-    //pub players_acc: Vec<Account<'info, player_state::Player>>,
-}
+// #[derive(Accounts)]
+// #[instruction(identifier: u64)]
+// pub struct EndGame<'info> {
+//     #[account(mut, seeds = [b"game".as_ref(), identifier.to_string().as_bytes()], bump, close = storage)]
+//     pub game: Account<'info, GameStart>,
+//     /// CHECK: SAFE PROGRAM OWNED ACCOUNT
+//     #[account(mut)]
+//     pub storage: Signer<'info>,
+//     #[account(mut)]
+//     history: AccountLoader<'info, History>,
+//     pub system_program: Program<'info, System>,
+//     #[account(mut, close = storage)]
+//     pub players_stats: AccountLoader<'info, PlayersStats>,
+//     //pub players_acc: Vec<Account<'info, player_state::Player>>,
+// }
 
 #[derive(Accounts)]
 pub struct CreateHistory<'info> {
@@ -83,8 +83,11 @@ pub struct CreateHistory<'info> {
 
 #[derive(Accounts)]
 pub struct CreatePlayerStats<'info> {
-    #[account(zero)]
-    player_stats: AccountLoader<'info, PlayersStats>,
+    #[account(init, payer = storage, space = 1570)]
+    player_stats: Account<'info, PlayersStatsVec>,
+    #[account(mut)]
+    storage: Signer<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 
