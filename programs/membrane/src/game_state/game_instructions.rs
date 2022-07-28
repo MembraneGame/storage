@@ -109,6 +109,7 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
     // let counter = stats.counter as usize; //value declared explicitly to avoid null pointer
     stats.append(stat);
     msg!("After: {}", stats.counter);
+    msg!("PlayersStats: {:?}", stats.players);
     // stats.players[counter] = stat;
     // stats.counter = stats.counter + 1;
 
