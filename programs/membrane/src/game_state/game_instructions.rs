@@ -104,8 +104,10 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
         reward: reward,
     };
     let stats = &mut ctx.accounts.players_stats.load_mut()?;
+    msg!("Before: {}", stats.counter);
     // let counter = stats.counter as usize; //value declared explicitly to avoid null pointer
     stats.append(stat);
+    msg!("After: {}", stats.counter);
     // stats.players[counter] = stat;
     // stats.counter = stats.counter + 1;
 
