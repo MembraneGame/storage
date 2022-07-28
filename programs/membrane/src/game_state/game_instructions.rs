@@ -94,7 +94,7 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
     let reward = (rating_multiplier * (placement_reward + kill_reward))/10; //calculate total reward
     player.claimable = player.claimable + reward;
     // let game = &ctx.accounts.game;
-    
+    msg!("Args: placement: {}, kills: {}", placement, kills);
     //make trait later
     let stat = Stats {
         id: player.identity,
