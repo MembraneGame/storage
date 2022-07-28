@@ -104,9 +104,10 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
         reward: reward,
     };
     let stats = &mut ctx.accounts.players_stats.load_mut()?;
-    let counter = stats.counter as usize; //value declared explicitly to avoid null pointer
-    stats.players[counter] = stat;
-    stats.counter += 1;
+    // let counter = stats.counter as usize; //value declared explicitly to avoid null pointer
+    stats.append(stat);
+    // stats.players[counter] = stat;
+    // stats.counter = stats.counter + 1;
 
 
     Ok(())
@@ -233,6 +234,17 @@ pub struct UserClaim<'info> {
 pub struct PlayersStats {
     pub players: [Stats; 32], //4 + 1472
     pub counter: u64, //1
+}
+
+impl PlayersStats {
+    fn append(&mut self, stat: Stats) {
+        self.players[PlayersStats::index_of(self.counter)] = stat;
+        self.counter = self.counter + 1;
+    }
+
+    fn index_of(counter: u64) -> usize {
+        std::convert::TryInto::try_into(counter).unwrap()
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, AnchorSerialize, AnchorDeserialize)]
