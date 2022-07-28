@@ -104,12 +104,12 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
         reward: reward,
     };
     msg!("Stat: {:?}", stat);
-    let stats = &mut ctx.accounts.players_stats.load_mut()?;
+    let stats = &mut ctx.accounts.players_stats;
     msg!("PlayersStats pubkey: {}", ctx.accounts.players_stats.key());
     msg!("Before: {}", stats.counter);
     msg!("PlayersStats before: {:?}", stats.players[0]);
     // let counter = stats.counter as usize; //value declared explicitly to avoid null pointer
-    stats.append(stat);
+    stats.players.push(stat);
     msg!("After: {}", stats.counter);
     msg!("PlayersStats after: {:?}", stats.players);
     // stats.players[counter] = stat;
@@ -214,7 +214,7 @@ pub struct CalculateReward<'info> {
         #[account(mut)]
         pub storage: Signer<'info>,
         #[account(mut)]
-        pub players_stats: AccountLoader<'info, PlayersStats>,
+        pub players_stats: Account<'info, PlayersStatsVec>,
         pub nft_multiplier: Account<'info, maths::QualityMultiplier>,
         pub system_program: Program<'info, System>,
 }
@@ -236,21 +236,10 @@ pub struct UserClaim<'info> {
         pub token_program: Program<'info, Token>,
 }
 
-#[account(zero_copy)]
-pub struct PlayersStats {
-    pub players: [Stats; 32], //4 + 1472
+#[account]
+pub struct PlayersStatsVec {
+    pub players: Vec<Stats>, //4 + 1472
     pub counter: u64, //1
-}
-
-impl PlayersStats {
-    fn append(&mut self, stat: Stats) {
-        self.players[PlayersStats::index_of(self.counter)] = stat;
-        self.counter = self.counter + 1;
-    }
-
-    fn index_of(counter: u64) -> usize {
-        std::convert::TryInto::try_into(counter).unwrap()
-    }
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, AnchorSerialize, AnchorDeserialize)]
