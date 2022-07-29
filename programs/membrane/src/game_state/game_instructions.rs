@@ -100,7 +100,7 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
     msg!("Args: placement: {}, kills: {}", placement, kills);
     //make trait later
     let stat = Stats {
-        id: ctx.accounts.storage.key(),
+        // id: ctx.accounts.storage.key(),
         placement: placement as u8,
         kills: kills as u8,
         // survival_duration: game.timestamp, //change later not implemented yet
@@ -208,7 +208,7 @@ pub struct InitializeMultiplier<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(placement: u64, kills: u64, identifier: u64)]
+// #[instruction(placement: u64, kills: u64, identifier: u64)]
 pub struct CalculateReward<'info> {
         // #[account(mut)]
         // pub reward: Account<'info, maths::Reward>,
@@ -258,7 +258,7 @@ impl PlayersStats {
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, AnchorSerialize, AnchorDeserialize)]
 pub struct Stats { //(32 + 1 + 1 + 8) * 32 = 1472
-    pub id: Pubkey, //32
+    // pub id: Pubkey, //32
     pub placement: u8, //1
     pub kills: u8, //1
     // pub survival_duration: u32, //4
