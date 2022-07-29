@@ -1,10 +1,10 @@
 use anchor_lang::prelude::*;
 // use anchor_spl::token::{self, Token, Mint, TokenAccount, Transfer, Approve};
 // use crate::player_state;
-use crate::errors;
+// use crate::errors;
 // use crate::maths;
 pub use crate::constants::*;
-use super::{Stats, PlayersStatsVec};
+use super::{Stats, PlayersStats};
 
 pub fn start_game(ctx: Context<StartGame>, _identifier: u64) -> Result<()> {
     let game = &mut ctx.accounts.game;
@@ -83,11 +83,8 @@ pub struct CreateHistory<'info> {
 
 #[derive(Accounts)]
 pub struct CreatePlayerStats<'info> {
-    #[account(init, payer = storage, space = 1570)]
-    player_stats: Account<'info, PlayersStatsVec>,
-    #[account(mut)]
-    storage: Signer<'info>,
-    pub system_program: Program<'info, System>,
+    #[account(zero)]
+    player_stats: AccountLoader<'info, PlayersStats>,
 }
 
 

@@ -36,9 +36,9 @@ pub mod membrane {
     //     game_state::start_game(ctx, identifier)
     // }
 
-    // pub fn create_player_stats(ctx: Context<CreatePlayerStats>) -> Result<()> {
-    //     game_state::create_player_stats(ctx)
-    // }
+    pub fn create_player_stats(ctx: Context<CreatePlayerStats>) -> Result<()> {
+        game_state::create_player_stats(ctx)
+    }
 
     // pub fn end_game(ctx: Context<EndGame>, identifier: u64) -> Result<()> {
     //     game_state::end_game(ctx, identifier)
