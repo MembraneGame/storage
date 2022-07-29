@@ -214,12 +214,12 @@ pub struct CalculateReward<'info> {
         // pub reward: Account<'info, maths::Reward>,
         // #[account(mut)]
         // player: Account<'info, player_state::Player>,
-        #[account(mut)]
-        pub storage: Signer<'info>,
+        // #[account(mut)]
+        // pub storage: Signer<'info>,
         #[account(mut)]
         pub players_stats: AccountLoader<'info, PlayersStats>,
         // pub nft_multiplier: Account<'info, maths::QualityMultiplier>,
-        pub system_program: Program<'info, System>,
+        // pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
