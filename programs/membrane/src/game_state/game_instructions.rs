@@ -37,7 +37,7 @@ pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, stats: AvgStats, nf
 
 //Fn to calculate reward at the end of the game and update player account
 pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u64, _identifier: u64) -> Result<()> {
-    let player = &mut ctx.accounts.player;
+    // let player = &mut ctx.accounts.player;
     // let rating_multiplier:u64 = match player.rating { //match rating_multiplier
     //     Some(0..=100) => 8, //values not final
     //     Some(101..=200) => 9,
@@ -100,7 +100,7 @@ pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u6
     msg!("Args: placement: {}, kills: {}", placement, kills);
     //make trait later
     let stat = Stats {
-        id: player.identity,
+        id: ctx.accounts.storage.key(),
         placement: placement as u8,
         kills: kills as u8,
         // survival_duration: game.timestamp, //change later not implemented yet
@@ -210,15 +210,15 @@ pub struct InitializeMultiplier<'info> {
 #[derive(Accounts)]
 #[instruction(placement: u64, kills: u64, identifier: u64)]
 pub struct CalculateReward<'info> {
-        #[account(mut)]
-        pub reward: Account<'info, maths::Reward>,
-        #[account(mut)]
-        player: Account<'info, player_state::Player>,
+        // #[account(mut)]
+        // pub reward: Account<'info, maths::Reward>,
+        // #[account(mut)]
+        // player: Account<'info, player_state::Player>,
         #[account(mut)]
         pub storage: Signer<'info>,
         #[account(mut)]
         pub players_stats: AccountLoader<'info, PlayersStats>,
-        pub nft_multiplier: Account<'info, maths::QualityMultiplier>,
+        // pub nft_multiplier: Account<'info, maths::QualityMultiplier>,
         pub system_program: Program<'info, System>,
 }
 
