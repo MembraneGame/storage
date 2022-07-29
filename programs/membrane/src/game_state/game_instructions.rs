@@ -38,61 +38,64 @@ pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, stats: AvgStats, nf
 //Fn to calculate reward at the end of the game and update player account
 pub fn calculate_reward(ctx: Context<CalculateReward>, placement: u64, kills: u64, _identifier: u64) -> Result<()> {
     let player = &mut ctx.accounts.player;
-    let rating_multiplier:u64 = match player.rating { //match rating_multiplier
-        Some(0..=100) => 8, //values not final
-        Some(101..=200) => 9,
-        Some(201..) => 10,
-        None => return Err(errors::ErrorCode::RatingUndefined.into()),
-        _ => return Err(errors::ErrorCode::RatingOverflow.into()),
-    };
-    let reward_account = &mut ctx.accounts.reward; //define Reward account
-    let nft_multiplier = &mut ctx.accounts.nft_multiplier; 
+    // let rating_multiplier:u64 = match player.rating { //match rating_multiplier
+    //     Some(0..=100) => 8, //values not final
+    //     Some(101..=200) => 9,
+    //     Some(201..) => 10,
+    //     None => return Err(errors::ErrorCode::RatingUndefined.into()),
+    //     _ => return Err(errors::ErrorCode::RatingOverflow.into()),
+    // };
+    // let reward_account = &mut ctx.accounts.reward; //define Reward account
+    // let nft_multiplier = &mut ctx.accounts.nft_multiplier; 
     
-    let unix_now = Clock::get().unwrap().unix_timestamp; //current time to compare
+    // let unix_now = Clock::get().unwrap().unix_timestamp; //current time to compare
 
-    if ((unix_now - constants::START)/constants::SEC_IN_DAY) != reward_account.days { //if statement to check whether next day has begun
-        reward_account.calculate_reward(nft_multiplier.common); //Calculate and update the reward account //only common quality at the moment
-        reward_account.reload()?; //update the reward account if new day begun
-        reward_account.days = (unix_now - constants::START)/constants::SEC_IN_DAY;
-    }
+    // if ((unix_now - constants::START)/constants::SEC_IN_DAY) != reward_account.days { //if statement to check whether next day has begun
+    //     reward_account.calculate_reward(nft_multiplier.common); //Calculate and update the reward account //only common quality at the moment
+    //     reward_account.reload()?; //update the reward account if new day begun
+    //     reward_account.days = (unix_now - constants::START)/constants::SEC_IN_DAY;
+    // }
 
 
-    //Define placement_reward based on placement
-    let placement_reward = match placement { //match the player placement and update player account
-        1 => {
-            player.rating = Some(player
-                .rating
-                .unwrap() + 10); //values not final
-            reward_account.victory
-        },
-        2..=5 => {
-            player.rating = Some(player
-                .rating
-                .unwrap() + 5);
-            reward_account.top_five
-        },
-        6..=10 => {
-            player.rating = Some(player
-                .rating
-                .unwrap() + 2);
-            reward_account.top_ten
-        },
-        _ => {
-            player.rating = Some(player
-                .rating
-                .unwrap() - 2);
-            if player
-            .rating
-            .unwrap() < 0 {
-                player.rating = Some(0);
-            }
-            0
-        },
-    };
+    // // Define placement_reward based on placement
+    // let placement_reward = match placement { //match the player placement and update player account
+    //     1 => {
+    //         player.rating = Some(player
+    //             .rating
+    //             .unwrap() + 10); //values not final
+    //         reward_account.victory
+    //     },
+    //     2..=5 => {
+    //         player.rating = Some(player
+    //             .rating
+    //             .unwrap() + 5);
+    //         reward_account.top_five
+    //     },
+    //     6..=10 => {
+    //         player.rating = Some(player
+    //             .rating
+    //             .unwrap() + 2);
+    //         reward_account.top_ten
+    //     },
+    //     _ => {
+    //         player.rating = Some(player
+    //             .rating
+    //             .unwrap() - 2);
+    //         if player
+    //         .rating
+    //         .unwrap() < 0 {
+    //             player.rating = Some(0);
+    //         }
+    //         0
+    //     },
+    // };
 
-    let kill_reward = kills * reward_account.kill; //calculate total reward for kills
-    let reward = (rating_multiplier * (placement_reward + kill_reward))/10; //calculate total reward
-    player.claimable = player.claimable + reward;
+    // let kill_reward = kills * reward_account.kill; //calculate total reward for kills
+    
+    // let reward = (rating_multiplier * (placement_reward + kill_reward))/10; //calculate total reward
+    let reward = 1;
+    
+    // player.claimable = player.claimable + reward;
     // let game = &ctx.accounts.game;
     msg!("Args: placement: {}, kills: {}", placement, kills);
     //make trait later
