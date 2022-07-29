@@ -17,7 +17,6 @@ import {
 import { expect } from 'chai';
 import {
   calculateInitialRewardParams,
-  calculatePlayerPayout,
   generateRandomGameResult,
   initializeMint,
   updateNftMultiplier
@@ -356,36 +355,43 @@ describe('Membrane', () => {
     expect(lamportsBefore + FEE_LAMPORTS).to.equal(lamportsAfter);
   });
 
-  it('Can start a game', async () => {
-    await program.methods
-      .startGame(identifier)
-      .accounts({
-        game: gamePDA,
-        storage: storage.publicKey,
-        systemProgram
-      })
-      .signers([storage])
-      .rpc();
-
-    const gameAccount = await program.account.gameStart.fetch(gamePDA);
-
-    expect(gameAccount?.timestamp.toNumber()).to.be.a('number');
+  it.skip('Can start a game', async () => {
+    // await program.methods
+    //   .startGame(identifier)
+    //   .accounts({
+    //     game: gamePDA,
+    //     storage: storage.publicKey,
+    //     systemProgram
+    //   })
+    //   .signers([storage])
+    //   .rpc();
+    //
+    // const gameAccount = await program.account.gameStart.fetch(gamePDA);
+    //
+    // expect(gameAccount?.timestamp.toNumber()).to.be.a('number');
   });
 
   it('Can make a single payout', async () => {
     const user = anchorProvider.wallet;
     const { placement, kills } = generateRandomGameResult();
+    const { placement: placement1, kills: kills1 } = generateRandomGameResult();
 
-    console.log({ placement: placement.toNumber(), kills: kills.toNumber() });
+    console.log({
+      placement: placement.toNumber(),
+      kills: kills.toNumber(),
+      placement1: placement1.toNumber(),
+      kills1: kills1.toNumber()
+    });
 
-    // Generate players stats account
-    playersStats = Keypair.generate();
-    const accountSize = 1560; // Should be enough
-    const lamportForRent = await anchorProvider.connection.getMinimumBalanceForRentExemption(
-      accountSize
-    );
+    const accountSize = 1808; // Should be enough
+    const lamportForRent =
+      await anchorProvider.connection.getMinimumBalanceForRentExemption(
+        accountSize
+      );
 
     console.log({ accountSize, lamportForRent });
+
+    playersStats = Keypair.generate();
 
     try {
       await program.methods
@@ -413,9 +419,9 @@ describe('Membrane', () => {
       playersStats.publicKey
     );
 
-    console.log(playersStats.publicKey.toBase58(), playersStatsAccount);
+    // console.log(playersStatsAccount);
 
-    // const playerAccountBefore = await program.account.player.fetch(playerPDA);
+    const id = Keypair.generate();
 
     try {
       await program.methods
@@ -423,9 +429,9 @@ describe('Membrane', () => {
         .accounts({
           reward: reward.publicKey,
           player: playerPDA,
-          playersStats: playersStats.publicKey,
           nftMultiplier: nftMultiplier.publicKey,
           storage: storage.publicKey,
+          playersStats: playersStats.publicKey,
           systemProgram
         })
         .signers([storage])
@@ -434,27 +440,104 @@ describe('Membrane', () => {
       console.error(e);
     }
 
-    const playerAccountAfter = await program.account.player.fetch(playerPDA);
+    try {
+      await program.methods
+        .calculateReward(placement1, kills1, identifier)
+        .accounts({
+          reward: reward.publicKey,
+          player: playerPDA,
+          nftMultiplier: nftMultiplier.publicKey,
+          storage: storage.publicKey,
+          playersStats: playersStats.publicKey,
+          systemProgram
+        })
+        .signers([storage])
+        .rpc();
+    } catch (e) {
+      console.error(e);
+    }
 
     const playersStatsAccountAfter = await program.account.playersStats.fetch(
       playersStats.publicKey
     );
 
-    const playersStatsAccountInfo = await anchorProvider.connection.getAccountInfo(
-      playersStats.publicKey
-    );
+    console.log(user.publicKey.toBase58());
+    console.log('------------ 1 -------------')
+    console.log(playersStatsAccountAfter.players[0]);
+    console.log(playersStatsAccountAfter.players[0].id.toBase58());
+    console.log(playersStatsAccountAfter.players[0].reward.toString());
+    console.log('------------ 2 -------------')
+    console.log(playersStatsAccountAfter.players[1]);
+    console.log(playersStatsAccountAfter.players[1].id.toBase58());
+    console.log(playersStatsAccountAfter.players[1].reward.toString());
+    console.log('------------ total -------------')
+    console.log(playersStatsAccountAfter.counter.toString());
 
-    // console.log(user.publicKey.toBase58());
-    console.log(playersStats.publicKey.toBase58(), playersStatsAccountAfter);
-    console.log('-------KEYS----------')
-    console.log('playersStats [0]', playersStatsAccountAfter.players[0].id.toBase58());
-    console.log('storage', storage.publicKey.toBase58());
-    console.log('user', user.publicKey.toBase58());
-    console.log('identity', playerAccountAfter.identity.toBase58());
-    console.log('player PDA', playerPDA.toBase58());
-    console.log('----------------------')
-    console.log(playersStatsAccountInfo);
-
+    // // Generate players stats account
+    // playersStats = Keypair.generate();
+    // const accountSize = 1560; // Should be enough
+    // const lamportForRent = await anchorProvider.connection.getMinimumBalanceForRentExemption(
+    //   accountSize
+    // );
+    //
+    // console.log({ accountSize, lamportForRent });
+    //
+    // try {
+    //   await program.methods
+    //     .createPlayerStats()
+    //     .accounts({
+    //       playerStats: playersStats.publicKey
+    //     })
+    //     .preInstructions([
+    //       // await program.account.playersStats.createInstruction(playersStats, accountSize)
+    //       SystemProgram.createAccount({
+    //         fromPubkey: storage.publicKey,
+    //         newAccountPubkey: playersStats.publicKey,
+    //         space: accountSize,
+    //         lamports: lamportForRent,
+    //         programId: program.programId
+    //       })
+    //     ])
+    //     .signers([playersStats, storage])
+    //     .rpc();
+    // } catch (e) {
+    //   console.error(e);
+    // }
+    //
+    // const playersStatsAccount = await program.account.playersStats.fetch(
+    //   playersStats.publicKey
+    // );
+    //
+    // console.log(playersStats.publicKey.toBase58(), playersStatsAccount);
+    //
+    // // const playerAccountBefore = await program.account.player.fetch(playerPDA);
+    //
+    // try {
+    //   await program.methods
+    //     .calculateReward(placement, kills, identifier)
+    //     .accounts({
+    //       // reward: reward.publicKey,
+    //       // player: playerPDA,
+    //       // nftMultiplier: nftMultiplier.publicKey,
+    //       storage: storage.publicKey,
+    //       playersStats: playersStats.publicKey,
+    //       systemProgram
+    //     })
+    //     .signers([storage])
+    //     .rpc();
+    // } catch (e) {
+    //   console.error(e);
+    // }
+    //
+    // const playerAccountAfter = await program.account.player.fetch(playerPDA);
+    //
+    // const playersStatsAccountAfter = await program.account.playersStats.fetch(
+    //   playersStats.publicKey
+    // );
+    //
+    // // console.log(user.publicKey.toBase58());
+    // console.log(playersStats.publicKey.toBase58(), playersStatsAccountAfter);
+    // console.log('playersStats [0]', playersStatsAccountAfter.players[0].reward.toString());
 
     // const nftMultiplierAccount = await program.account.qualityMultiplier.fetch(
     //   nftMultiplier.publicKey

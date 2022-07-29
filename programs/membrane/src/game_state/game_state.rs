@@ -17,7 +17,7 @@ pub fn create_player_stats(_ctx: Context<CreatePlayerStats>) -> Result<()> {
     Ok(())
 }
 
-pub fn create_history_account(_ctx: Context<CreateHistory>) -> Result<()> {    
+pub fn create_history_account(_ctx: Context<CreateHistory>) -> Result<()> {
     Ok(())
 }
 
@@ -34,15 +34,15 @@ pub fn create_history_account(_ctx: Context<CreateHistory>) -> Result<()> {
 //         duration: duration as u64,
 //         player_stats: stats.players.clone(),
 //     };
-    
+
 //     if counter > 6999 {
 //         return Err(errors::ErrorCode::HistoryOverflow.into())
 //     }
-    
+
 //     history.games[counter] = game;
 //     history.counter += 1;
 
-    
+
 //     Ok(())
 // }
 
@@ -81,12 +81,17 @@ pub struct CreateHistory<'info> {
     history: AccountLoader<'info, History>,
 }
 
+// #[derive(Accounts)]
+// pub struct CreatePlayerStats<'info> {
+//     #[account(zero)]
+//     player_stats: AccountLoader<'info, PlayersStats>,
+// }
+
 #[derive(Accounts)]
 pub struct CreatePlayerStats<'info> {
     #[account(zero)]
     player_stats: AccountLoader<'info, PlayersStats>,
 }
-
 
 #[account(zero_copy)]
 pub struct History { //one game is 1492 bytes // 7028 games for accout size overflow (per epoch)
@@ -97,7 +102,7 @@ pub struct History { //one game is 1492 bytes // 7028 games for accout size over
 #[derive(Clone, Copy, Debug, Default, PartialEq, AnchorSerialize, AnchorDeserialize)]
 pub struct Game {
     pub identifier: u64, //8
-    pub duration: u64, //8 
+    pub duration: u64, //8
     pub player_stats: [Stats; 32], //1476
 }
 

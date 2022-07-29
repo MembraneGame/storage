@@ -28,7 +28,7 @@ pub mod membrane {
     pub fn update_nft_multiplier(ctx: Context<UpdateMultiplier>, stats: AvgStats, nfts: NftQualities) -> Result<()> {
         game_state::update_nft_multiplier(ctx, stats, nfts)
     }
-    pub fn create_history_account(ctx: Context<CreateHistory>) -> Result<()> { 
+    pub fn create_history_account(ctx: Context<CreateHistory>) -> Result<()> {
         game_state::create_history_account(ctx)
     }
 
@@ -46,7 +46,7 @@ pub mod membrane {
 
     pub fn transfer_authority(ctx: Context<TransferAuthority>) -> Result<()> { //transfer authority to mint tokens to PDA
         token_state::transfer_authority(ctx)
-    } 
+    }
 
     pub fn initialize_player(ctx: Context<InitializePlayer>, rating: Option<i64>) -> Result<()> { //authority is user
         player_state::create_player(ctx, rating)
