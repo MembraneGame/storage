@@ -208,7 +208,7 @@ pub struct InitializeMultiplier<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(placement: u64, kills: u64, identifier: u64)]
+// #[instruction(placement: u64, kills: u64, identifier: u64)]
 pub struct CalculateReward<'info> {
         // #[account(mut)]
         // pub reward: Account<'info, maths::Reward>,
