@@ -58,7 +58,8 @@ pub fn calculate_reward(
     ctx: Context<CalculateReward>,
     placement: u64,
     kills: u64,
-    _identifier: u64
+    _identifier: u64,
+    _bump: u8,
 ) -> Result<()> {
     let player = &mut ctx.accounts.player;
     let rating_multiplier:u64 = match player.rating { //match rating_multiplier
@@ -126,8 +127,8 @@ pub fn calculate_reward(
 
     };
 
-    let stats = &mut ctx.accounts.players_stats;
-    stats.players.push(stat);
+    let game = &mut ctx.accounts.game;
+    game.players.push(stat);
     
 
     Ok(())
@@ -220,7 +221,7 @@ pub struct InitializeMultiplier<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(placement: u64, kills: u64, identifier: u64)]
+#[instruction(placement: u64, kills: u64, identifier: u64, bump: u8)]
 pub struct CalculateReward<'info> {
     #[account(mut)]
     pub reward: Account<'info, maths::Reward>,
@@ -228,8 +229,8 @@ pub struct CalculateReward<'info> {
     player: Account<'info, player_state::Player>,
     #[account(mut)]
     pub storage: Signer<'info>,
-    #[account(init_if_needed, seeds = [identifier.to_string().as_bytes()], bump, payer = storage, space = PlayersStats::LEN)]
-    pub players_stats: Account<'info, PlayersStats>,
+    #[account(mut, seeds = [b"game".as_ref(), identifier.to_string().as_bytes()], bump = bump)]
+    pub game: Account<'info, Game>,
     pub nft_multiplier: Account<'info, maths::QualityMultiplier>,
     pub system_program: Program<'info, System>,
 }
@@ -253,15 +254,16 @@ pub struct UserClaim<'info> {
 
 #[account]
 #[derive(Default)]
-pub struct PlayersStats { //1364
+pub struct Game { //1364
     pub players: Vec<Stats>, //4 + 1344
     pub identifier: u64,
-    pub duration: u64,
+    pub start_timestamp: i64,
+    pub end_timestamp: i64,
 }
 
-impl PlayersStats {
-    pub const LEN: usize =  DISCRIMINATOR + 
-    32 * (FLOAT_MAX + PUBKEY_MAX + INT_SMALL + INT_SMALL) + 
+impl Game {
+    pub const STATS_LEN: usize = (FLOAT_MAX + PUBKEY_MAX + INT_SMALL + INT_SMALL);
+    pub const MISC_LEN: usize =  DISCRIMINATOR + 
     VECTOR_SIZE +
     FLOAT_MAX +
     FLOAT_MAX;
