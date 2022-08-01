@@ -2,6 +2,8 @@
 pub const FLOAT_MAX: usize = 8;
 pub const PUBKEY_MAX: usize = 32;
 pub const DISCRIMINATOR: usize = 8;
+pub const INT_SMALL: usize = 1;
+pub const VECTOR_SIZE: usize = 4;
 
 //Consts for reward calculation
 pub const NFT_PRICE: u64 = 150000000000; //nft not implemented yet, const now
