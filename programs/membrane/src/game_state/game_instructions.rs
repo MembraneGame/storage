@@ -266,6 +266,7 @@ impl Game {
     pub const MISC_LEN: usize =  DISCRIMINATOR + 
     VECTOR_SIZE +
     FLOAT_MAX +
+    FLOAT_MAX + 
     FLOAT_MAX;
 }
 
